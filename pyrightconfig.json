@@ -1,0 +1,20 @@
+{
+  "include": [
+    "assistant",
+    "main.py",
+    "voice_main.py",
+    "server.py",
+    "start_backend.py"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".venv"
+  ],
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "stubPath": ""
+}

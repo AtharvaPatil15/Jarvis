@@ -1,0 +1,20 @@
+# requirements.txt
+
+# Web Framework & API
+fastapi
+uvicorn
+websockets
+
+# Web scraping & search
+requests
+beautifulsoup4
+duckduckgo-search
+
+# Voice mode dependencies
+pvporcupine
+sounddevice
+numpy
+SpeechRecognition
+PyAudio
+edge-tts
+pygame

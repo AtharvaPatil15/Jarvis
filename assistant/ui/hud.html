@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stark HUD</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent; }
+        canvas { display: block; }
+    </style>
+    
+    <script src="libs/three.min.js"></script>
+    <script src="libs/EffectComposer.js"></script>
+    <script src="libs/RenderPass.js"></script>
+    <script src="libs/ShaderPass.js"></script>
+    <script src="libs/CopyShader.js"></script>
+    <script src="libs/LuminosityHighPassShader.js"></script>
+    <script src="libs/UnrealBloomPass.js"></script>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+    <script>
+        // --- CONFIGURATION ---
+        const COLORS = {
+            jarvis: { primary: 0xffaa00, secondary: 0x0088ff }, // Orange/Blue
+            friday: { primary: 0xff0033, secondary: 0x550000 }  // Deep Red
+        };
+        let currentMode = 'jarvis';
+
+        // --- 1. SETUP SCENE ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);
+        document.body.appendChild(renderer.domElement);
+
+        // --- 2. JARVIS: PARTICLE SYSTEM (The "Cloud") ---
+        // Instead of a solid ball, we create 2000 random floating points
+        const particleGeo = new THREE.BufferGeometry();
+        const particleCount = 2000;
+        const posArray = new Float32Array(particleCount * 3);
+        
+        for(let i = 0; i < particleCount * 3; i++) {
+            // Create a sphere distribution
+            posArray[i] = (Math.random() - 0.5) * 2.5; 
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.02,
+            color: COLORS.jarvis.primary,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const particleMesh = new THREE.Points(particleGeo, particleMat);
+        scene.add(particleMesh);
+
+        // --- 3. THE CORE (The "Mind Stone" Center) ---
+        // A smaller, denser wireframe inside
+        const coreGeo = new THREE.IcosahedronGeometry(0.5, 1);
+        const coreMat = new THREE.MeshBasicMaterial({ 
+            color: COLORS.jarvis.secondary, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.5 
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        // --- 4. ORBITAL RINGS (Technical Data) ---
+        // Three rings spinning on different axes
+        const ringGeo = new THREE.TorusGeometry(1.2, 0.01, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: COLORS.jarvis.secondary, opacity: 0.3, transparent: true });
+        
+        const ring1 = new THREE.Mesh(ringGeo, ringMat);
+        const ring2 = new THREE.Mesh(ringGeo, ringMat);
+        const ring3 = new THREE.Mesh(ringGeo, ringMat);
+
+        ring1.rotation.x = Math.PI / 2;
+        ring2.rotation.x = Math.PI / 2;
+        ring2.rotation.y = 0.5;
+        ring3.rotation.x = Math.PI / 2;
+        ring3.rotation.y = -0.5;
+
+        const rings = new THREE.Group();
+        rings.add(ring1);
+        rings.add(ring2);
+        rings.add(ring3);
+        scene.add(rings);
+
+        camera.position.z = 2.5;
+
+        // --- 5. POST-PROCESSING (The Glow) ---
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(new THREE.RenderPass(scene, camera));
+        
+        // High intensity bloom for that "Hologram" look
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            2.0,  // Strength (High glow)
+            0.5,  // Radius
+            0.1   // Threshold
+        );
+        composer.addPass(bloomPass);
+
+        // --- 6. ANIMATION & STATE ---
+        let state = 'idle';
+        let time = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // 1. Particle Cloud Motion (Turbulence)
+            particleMesh.rotation.y = time * 0.1;
+            particleMesh.rotation.z = time * 0.05;
+
+            // Make particles "breathe"
+            const scale = 1 + Math.sin(time) * 0.05;
+            particleMesh.scale.set(scale, scale, scale);
+
+            // 2. Ring Motion (Gyroscopic)
+            ring1.rotation.z += 0.01;
+            ring2.rotation.z -= 0.015;
+            ring3.rotation.z += 0.02;
+
+            // 3. Core Motion
+            core.rotation.x -= 0.02;
+            core.rotation.y -= 0.02;
+
+            // 4. REACT TO VOICE STATE
+            if (state === 'listening') {
+                // Fast spin, Greenish tint
+                particleMesh.rotation.y += 0.1; 
+                rings.rotation.z -= 0.05;
+                bloomPass.strength = 3.0;
+            } 
+            else if (state === 'speaking') {
+                // Pulse to the beat (Simulated)
+                const beat = 1 + Math.sin(Date.now() * 0.02) * 0.2;
+                core.scale.setScalar(beat);
+                bloomPass.strength = 1.5 + Math.sin(Date.now() * 0.02);
+            } 
+            else {
+                // Idle
+                bloomPass.strength = 1.5;
+            }
+
+            composer.render();
+        }
+        animate();
+
+        // --- 7. BRIDGE TO PYTHON ---
+        if (typeof qt !== 'undefined') {
+            new QWebChannel(qt.webChannelTransport, function (channel) {
+                window.bridge = channel.objects.bridge;
+                
+                window.bridge.status_update.connect(function (newState) {
+                    state = newState;
+                    
+                    // Visual cues for state changes
+                    if (newState === 'listening') {
+                        // Flash brighter temporarily
+                        bloomPass.strength = 4.0;
+                    }
+                });
+                
+                window.bridge.set_mode.connect(function (mode) {
+                    currentMode = mode;
+                    if (mode === 'friday') {
+                        // SWITCH TO RED/TACTICAL
+                        particleMat.color.setHex(COLORS.friday.primary);
+                        coreMat.color.setHex(COLORS.friday.secondary);
+                        ringMat.color.setHex(COLORS.friday.primary);
+                        // Make particles sharper/denser for Friday
+                        particleMat.size = 0.03;
+                    } else {
+                        // SWITCH TO BLUE/ORANGE
+                        particleMat.color.setHex(COLORS.jarvis.primary);
+                        coreMat.color.setHex(COLORS.jarvis.secondary);
+                        ringMat.color.setHex(COLORS.jarvis.secondary);
+                        particleMat.size = 0.02;
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
