@@ -18,6 +18,7 @@ app.add_middleware(
 orchestrator = Orchestrator()
 active_socket: WebSocket | None = None
 main_loop: asyncio.AbstractEventLoop | None = None
+current_llm_task: asyncio.Future | None = None
 
 def handle_voice_event(event_type: str, data: Any):
     """
@@ -29,7 +30,27 @@ def handle_voice_event(event_type: str, data: Any):
     if main_loop and main_loop.is_running():
         # 1. Handle Command Processing
         if event_type == "process_command":
-            asyncio.run_coroutine_threadsafe(process_and_respond(data), main_loop)
+            global current_llm_task
+            
+            # Cancel any ongoing LLM task
+            if current_llm_task and not current_llm_task.done():
+                current_llm_task.cancel()
+            
+            current_llm_task = asyncio.run_coroutine_threadsafe(
+                process_and_respond(data),
+                main_loop
+            )
+            return
+        
+        # Handle merge commands (interrupts)
+        if event_type == "merge_command":
+            if current_llm_task and not current_llm_task.done():
+                current_llm_task.cancel()
+            
+            current_llm_task = asyncio.run_coroutine_threadsafe(
+                process_and_respond(data),
+                main_loop
+            )
             return
 
         # 2. Broadcast to UI
@@ -42,17 +63,26 @@ def handle_voice_event(event_type: str, data: Any):
 
 async def process_and_respond(command: str):
     """Async wrapper to handle LLM processing without blocking"""
-    # 1. Generate Response
-    response_text = orchestrator.handle_input(command)
-    
-    # 2. Update UI
-    if active_socket:
-        await active_socket.send_json({"type": "ai_response", "payload": response_text})
-    
-    # 3. Speak Response (CRITICAL FIX: Run in Thread Pool to avoid blocking Loop)
-    # This prevents the "asyncio.run() cannot be called" error
-    loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, voice.speak, response_text)
+    try:
+        # 1. Generate Response
+        response_text = orchestrator.handle_input(command)
+        
+        # 2. Update UI
+        if active_socket:
+            await active_socket.send_json({"type": "ai_response", "payload": response_text})
+        
+        # 3. Speak Response (CRITICAL FIX: Run in Thread Pool to avoid blocking Loop)
+        # This prevents the "asyncio.run() cannot be called" error
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, voice.speak, response_text)
+        
+        # 4. Mark processing complete
+        voice.conv_manager.is_processing = False
+        
+    except asyncio.CancelledError:
+        print("⚠️ LLM task cancelled (user interrupted)")
+        voice.conv_manager.is_processing = False
+        raise
 
 voice = VoiceController(on_event=handle_voice_event)
 

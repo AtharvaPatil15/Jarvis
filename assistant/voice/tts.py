@@ -1,64 +1,47 @@
-import os
 import asyncio
 import edge_tts
 import pygame
 import uuid
-import threading
+import os
 
-# VOICE CONFIGURATION
-VOICE = "en-GB-RyanNeural"    # JARVIS
+VOICE = "en-GB-RyanNeural"
 
 class TextToSpeech:
-    def __init__(self):
-        try:
-            pygame.mixer.init()
-            pygame.mixer.set_num_channels(8)
-        except Exception as e:
-            print(f"⚠️ Audio driver warning: {e}")
 
-    async def _generate_audio(self, text, output_file):
-        communicate = edge_tts.Communicate(text, VOICE, rate="+20%") 
-        await communicate.save(output_file)
+    def __init__(self):
+        pygame.mixer.init()
+
+    async def _stream_tts(self, text, filename):
+        communicate = edge_tts.Communicate(text, VOICE, rate="+20%")
+
+        with open(filename, "wb") as f:
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    f.write(chunk["data"])
 
     def speak(self, text):
-        if not text: return
+        if not text:
+            return
 
         filename = f"response_{uuid.uuid4().hex}.mp3"
-        
+
         try:
-            # CRITICAL FIX: Loop Detection
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
+            asyncio.run(self._stream_tts(text, filename))
 
-            if loop and loop.is_running():
-                # We are trapped in a loop! Spawn a thread to escape.
-                t = threading.Thread(target=self._run_async_gen, args=(text, filename))
-                t.start()
-                t.join()
-            else:
-                # Safe to run normally
-                asyncio.run(self._generate_audio(text, filename))
-
-            # Play Audio
-            if os.path.exists(filename):
-                pygame.mixer.music.load(filename)
-                pygame.mixer.music.play()
-                while pygame.mixer.music.get_busy():
-                    pygame.time.Clock().tick(10)
-                pygame.mixer.music.unload()
+            pygame.mixer.music.load(filename)
+            pygame.mixer.music.play()
 
         except Exception as e:
-            print(f"❌ TTS Error: {e}")
-        
+            print("TTS Error:", e)
+
         finally:
+            # Cleanup later in background
+            asyncio.run(self._cleanup_file(filename))
+
+    async def _cleanup_file(self, filename):
+        await asyncio.sleep(5)
+        if os.path.exists(filename):
             try:
-                if os.path.exists(filename):
-                    os.remove(filename)
+                os.remove(filename)
             except:
                 pass
-
-    def _run_async_gen(self, text, filename):
-        """Helper to run async code in a fresh thread"""
-        asyncio.run(self._generate_audio(text, filename))

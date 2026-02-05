@@ -13,7 +13,7 @@ function createWindow() {
     height: 700,
 
     // ⭐ CRITICAL FIXES
-    frame: true,                 // Must be true for WebGL stability
+    frame: false,                 // Remove Top Window Frame Completely (Jarvis Style)
     transparent: false,          // Transparent windows break ThreeJS
     backgroundColor: "#050505",  // Matches your UI background
 
@@ -30,7 +30,12 @@ function createWindow() {
   mainWindow.loadURL("http://localhost:3000");
 
   // ⭐ Open DevTools for debugging
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
+
+  //Remove Menu Bar ("File Edit View...")
+  mainWindow.setMenu(null);
+
+
 
   mainWindow.on("closed", () => {
     mainWindow = null;

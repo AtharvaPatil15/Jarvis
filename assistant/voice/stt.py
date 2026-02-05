@@ -28,29 +28,25 @@ class SpeechToText:
         """
         try:
             with sr.Microphone(device_index=self.device_index) as source:
-                # Quick ambient noise adjustment (only 0.5s instead of default 1s)
-                self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
-                
+
+                # ⚡ ONLY calibrate occasionally
+                if not hasattr(self, "_calibrated"):
+                    self.recognizer.adjust_for_ambient_noise(source, duration=0.3)
+                    self._calibrated = True
+
                 print("🎤 Listening...", end="\r")
-                
-                # Listen with a timeout so it doesn't hang forever
+
                 try:
-                    audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=duration)
+                    audio = self.recognizer.listen(
+                        source,
+                        timeout=2,
+                        phrase_time_limit=duration
+                    )
                 except sr.WaitTimeoutError:
                     return None
 
-                if not audio:
-                    return None
-
                 print("⏳ Processing...", end="\r")
-                text = self.recognizer.recognize_google(audio)  # type: ignore
-                return text
+                return self.recognizer.recognize_google(audio)  # type: ignore
 
-        except sr.UnknownValueError:
-            return None # Heard sound but couldn't understand
-        except sr.RequestError:
-            print("❌ STT Error: Internet/API down")
-            return None
-        except Exception as e:
-            # print(f"❌ STT Error: {e}") # Silent fail to keep console clean
+        except Exception:
             return None

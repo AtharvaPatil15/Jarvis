@@ -45,7 +45,7 @@ def main():
         access_key=PORCUPINE_ACCESS_KEY,
         keyword="computer",
         device_index=selected["index"],
-        sensitivity=0.8
+        sensitivity=0.9
     )
     stt = SpeechToText(device_index=selected["index"])
     tts = TextToSpeech()

@@ -4,7 +4,7 @@ import numpy as np
 import sys
 
 class WakeWordListener:
-    def __init__(self, access_key: str, keyword="computer", device_index=None, sensitivity=0.8):
+    def __init__(self, access_key: str, keyword="computer", device_index=None, sensitivity=0.9):
         self.porcupine = pvporcupine.create(
             access_key=access_key,
             keywords=[keyword],
