@@ -80,9 +80,8 @@ export const ParticleField = () => {
   });
 
   return (
-    // FIX: Reverted to undefined to satisfy TypeScript.
-    // The safety check in useFrame handles the runtime crash.
-    <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]}>
+    // FIX: Cast to any to satisfy TypeScript strict checks
+    <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT] as any}>
       <dodecahedronGeometry args={[0.2, 0]} />
       <meshBasicMaterial 
         color="#00A3FF" 

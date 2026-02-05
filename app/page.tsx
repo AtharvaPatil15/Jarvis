@@ -13,7 +13,7 @@ import { useSocket } from '@/hooks/useSocket';
 function SceneContent() {
   return (
     <>
-      <color attach="background" args={['#050505']} />
+      {/* Background color removed - CSS handles transparency */}
       
       <CoreSphere />
       <ParticleField />
@@ -33,17 +33,16 @@ function SceneContent() {
 }
 
 export default function Home() {
-  // ✅ Active Socket Connection
   useSocket(); 
 
   return (
-    <div className="w-full h-screen bg-[#050505] relative overflow-hidden">
+    // ✅ FIX: Ensure parent div is transparent
+    <div className="w-full h-screen bg-transparent relative overflow-hidden">
         <div className="absolute inset-0 z-0">
             <Canvas 
                 camera={{ position: [0, 0, 8], fov: 45 }}
-                dpr={[1, 2]} 
-                // CRITICAL FIX: Removed 'depth: false' to fix rendering issues
-                gl={{ antialias: false, stencil: false }}
+                // ✅ FIX: Enable alpha for transparency, antialias for clean edges
+                gl={{ alpha: true, antialias: true }}
             >
                 <Suspense fallback={null}>
                     <SceneContent />

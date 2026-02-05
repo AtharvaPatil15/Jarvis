@@ -1,47 +1,58 @@
-const { app, BrowserWindow, screen } = require('electron');
-const path = require('path');
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
+
+// IMPORTANT: DO NOT disable GPU
+// WebGL requires hardware acceleration
+// app.disableHardwareAcceleration();  <-- NEVER enable this
 
 let mainWindow;
 
-// Fix for some Windows GPUs rendering black on transparent windows
-app.disableHardwareAcceleration(); 
-
 function createWindow() {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-
   mainWindow = new BrowserWindow({
-    width: 500,
-    height: 600,
-    x: width - 520, 
-    y: 20,
-    frame: false,       // No border
-    transparent: true,  // See-through
-    backgroundColor: '#00000000', // Fully transparent hex
-    alwaysOnTop: true,
-    resizable: true,
-    hasShadow: false,   // Disable shadow to prevent artifacts
+    width: 420,
+    height: 700,
+
+    // ⭐ CRITICAL FIXES
+    frame: true,                 // Must be true for WebGL stability
+    transparent: false,          // Transparent windows break ThreeJS
+    backgroundColor: "#050505",  // Matches your UI background
+
+    resizable: false,
+
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
+      contextIsolation: true,
+      nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js")
+    }
   });
 
-  mainWindow.loadURL('http://localhost:3000');
-  
-  // Keep mouse events active so you can drag/interact for now
-  mainWindow.setIgnoreMouseEvents(false);
+  // ⭐ Load Next.js dev server
+  mainWindow.loadURL("http://localhost:3000");
 
-  mainWindow.on('closed', () => (mainWindow = null));
+  // ⭐ Open DevTools for debugging
+  mainWindow.webContents.openDevTools();
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 
-app.on('ready', () => {
-    setTimeout(createWindow, 500); // Slight delay to ensure app is ready
+// ---------- Electron App Lifecycle ----------
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+// ---------- Quit Handling ----------
 
-app.on('activate', () => {
-  if (mainWindow === null) createWindow();
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
