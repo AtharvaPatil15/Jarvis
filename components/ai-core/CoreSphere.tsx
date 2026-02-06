@@ -1,11 +1,9 @@
-// components/ai-core/CoreSphere.tsx
 'use client';
 
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Mesh, Color } from 'three';
+import { Mesh, Color, Vector3 } from 'three';
 import { useAssistantStore } from '@/store/assistantStore';
-import { MathUtils } from 'three';
 import * as THREE from 'three';
 
 export const CoreSphere = () => {
@@ -34,37 +32,41 @@ export const CoreSphere = () => {
     // @ts-ignore
     innerRef.current.material.color.lerp(targetColor, 0.05);
 
+    // --- 3️⃣ Base Scale Control ---
+    const baseScale = 0.9;
+    let targetScale = baseScale;
+
     // STATE MACHINE ANIMATIONS
     switch (status) {
       case 'idle':
-        // Slow breathing
-        const breathe = Math.sin(t * 1) * 0.05 + 1;
-        meshRef.current.scale.setScalar(breathe);
+        targetScale = baseScale + Math.sin(t * 1) * 0.05;
         meshRef.current.rotation.y += delta * 0.2;
         break;
-        
+
       case 'listening':
-        // Expansion
-        meshRef.current.scale.lerp(new THREE.Vector3(1.2, 1.2, 1.2), 0.1);
+        targetScale = baseScale * 1.1;
         meshRef.current.rotation.y += delta * 0.5;
         break;
-        
+
       case 'thinking':
-        // Rapid chaotic rotation
         meshRef.current.rotation.x += delta * 2;
         meshRef.current.rotation.y += delta * 3;
-        meshRef.current.scale.setScalar(1 + Math.sin(t * 10) * 0.05);
+        targetScale = baseScale + Math.sin(t * 8) * 0.06;
         break;
-        
+
       case 'executing_tool':
-        // Sharp pulsing
-        const pulse = Math.sin(t * 20) > 0 ? 1.3 : 1.0;
-        meshRef.current.scale.lerp(new THREE.Vector3(pulse, pulse, pulse), 0.2);
+        targetScale = baseScale * 1.2;
         break;
-        
+
       default:
-        meshRef.current.rotation.y += delta * 0.5;
+        meshRef.current.rotation.y += delta * 0.3;
     }
+
+    // Apply smooth scaling
+    meshRef.current.scale.lerp(
+      new THREE.Vector3(targetScale, targetScale, targetScale),
+      0.08
+    );
     
     // Inner core counter-rotation
     innerRef.current.rotation.y -= delta * 0.5;
@@ -75,7 +77,8 @@ export const CoreSphere = () => {
     <group>
       {/* Outer Wireframe Shell */}
       <mesh ref={meshRef}>
-        <icosahedronGeometry args={[1.5, 2]} />
+        {/* 1️⃣ Reduced Outer Size */}
+        <icosahedronGeometry args={[0.9, 2]} />
         <meshBasicMaterial 
           wireframe 
           transparent 
@@ -86,21 +89,19 @@ export const CoreSphere = () => {
 
       {/* Inner Energy Core */}
       <mesh ref={innerRef} scale={[0.8, 0.8, 0.8]}>
-        <icosahedronGeometry args={[1.5, 4]} />
+        {/* 1️⃣ Reduced Inner Size */}
+        <icosahedronGeometry args={[0.6, 4]} />
         <meshBasicMaterial 
           transparent 
-          opacity={0.8} 
+          {/* 4️⃣ Reduced Opacity */}
+          opacity={0.5} 
           wireframe={true}
           wireframeLinewidth={2}
           toneMapped={false}
         />
       </mesh>
       
-      {/* Solid Inner Glow Core */}
-      <mesh scale={[0.5, 0.5, 0.5]}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshBasicMaterial color="white" transparent opacity={0.5} />
-      </mesh>
+      {/* 2️⃣ REMOVED Solid Inner Glow Core to fix "Giant Blob" look */}
     </group>
   );
 };
