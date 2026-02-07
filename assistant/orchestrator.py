@@ -1,3 +1,4 @@
+# orchestrator.py
 import logging
 from datetime import datetime
 from assistant.brain.llm import LocalLLM
@@ -51,7 +52,14 @@ class Orchestrator:
             elif step["type"] == "llm":
                 # Inject system context for personality
                 system_prompt = self._construct_system_prompt()
-                full_prompt = f"{system_prompt}\n\nUser: {step['input']}\nJarvis:"
+
+                # Build conversation history context
+                history = self.memory.get_recent_history()
+                history_block = ""
+                for turn in history:
+                    history_block += f"User: {turn['user']}\nJarvis: {turn['assistant']}\n"
+
+                full_prompt = f"{system_prompt}\n\n{history_block}User: {step['input']}\nJarvis:"
                 
                 # Execute LLM (Mapped to self.llm.generate)
                 response = self.llm.generate(full_prompt)
@@ -59,6 +67,9 @@ class Orchestrator:
 
         # 3. Combine results into final response
         final_response = " ".join(results)
+
+        # 4. Store turn in short-term memory
+        self.memory.add_turn(input_text, final_response)
 
         return {
             "type": "final_response",

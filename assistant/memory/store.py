@@ -8,6 +8,18 @@ class MemoryStore:
     def __init__(self):
         if not MEMORY_FILE.exists():
             MEMORY_FILE.write_text(json.dumps({}))
+        self.conversation_history = []
+
+    def add_turn(self, user_text: str, assistant_text: str):
+        self.conversation_history.append({
+            "user": user_text,
+            "assistant": assistant_text
+        })
+        # Keep only last 5 turns
+        self.conversation_history = self.conversation_history[-5:]
+
+    def get_recent_history(self):
+        return self.conversation_history
 
     def load(self) -> dict:
         return json.loads(MEMORY_FILE.read_text())
