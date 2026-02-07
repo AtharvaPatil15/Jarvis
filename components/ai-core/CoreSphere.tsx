@@ -93,7 +93,6 @@ export const CoreSphere = () => {
         <icosahedronGeometry args={[0.6, 4]} />
         <meshBasicMaterial 
           transparent 
-          {/* 4️⃣ Reduced Opacity */}
           opacity={0.5} 
           wireframe={true}
           wireframeLinewidth={2}

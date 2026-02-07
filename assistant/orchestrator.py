@@ -1,18 +1,18 @@
-# assistant/orchestrator.py
 import logging
 from datetime import datetime
 from assistant.brain.llm import LocalLLM
-from assistant.brain.planner import Planner
-from assistant.tools.smart_search import SmartSearchTool
+from assistant.planner import Planner
 from assistant.memory.store import MemoryStore
+from assistant.tools import build_tool_registry
 
 class Orchestrator:
     def __init__(self):
         self.llm = LocalLLM()
-        self.planner = Planner(self.llm)
+        # Initialize the new Planner
+        self.planner = Planner()
         self.memory = MemoryStore()
-        self.search_tool = SmartSearchTool()
-        self.user_profile = self.memory  # simple alias for now
+        self.user_profile = self.memory
+        self.tool_registry = build_tool_registry()
 
     def _construct_system_prompt(self):
         """Builds a dynamic system prompt with time and context."""
@@ -30,37 +30,42 @@ class Orchestrator:
             f"Keep voice responses concise (1-2 sentences) unless asked for details.\n"
         )
 
-    def handle_input(self, user_input: str) -> str:
+    def handle_input(self, input_text: str):
         """
-        Main loop: Input -> Plan -> Execute -> Response
+        Main agent loop using planner.
         """
-        # 1. Update System Prompt with fresh time
-        system_prompt = self._construct_system_prompt()
-        
-        # 2. Check for Search Intent (Simple routing)
-        lower_input = user_input.lower()
-        if any(w in lower_input for w in ["search", "google", "find", "weather", "news", "price", "who is", "when is"]):
-            print(f"🕵️ Routing to Smart Search: {user_input}")
-            search_result = self.search_tool.run(query=user_input)
-            
-            # Synthesize answer
-            context_prompt = (
-                f"{system_prompt}\n"
-                f"SEARCH RESULTS:\n{search_result}\n\n"
-                f"USER QUERY: {user_input}\n"
-                f"INSTRUCTION: Answer the user's question based on the search results."
-            )
-            return self.llm.generate(context_prompt)
 
-        # 3. Direct Chat (Time, Math, General)
-        # We inject the time into the prompt so the LLM can "see" it
-        full_prompt = (
-            f"{system_prompt}\n\n"
-            f"User: {user_input}\n"
-            f"Jarvis:"
-        )
-        return self.llm.generate(full_prompt)
+        # 1. Get Plan
+        steps = self.planner.plan(input_text)
+        results = []
+
+        # 2. Execute Steps
+        for step in steps:
+            if step["type"] == "tool":
+                tool = self.tool_registry.get(step["name"])
+                if tool:
+                    print(f"🔧 Executing Tool: {step['name']}")
+                    result = tool.execute(step["input"])
+                    results.append(result)
+
+            elif step["type"] == "llm":
+                # Inject system context for personality
+                system_prompt = self._construct_system_prompt()
+                full_prompt = f"{system_prompt}\n\nUser: {step['input']}\nJarvis:"
+                
+                # Execute LLM (Mapped to self.llm.generate)
+                response = self.llm.generate(full_prompt)
+                results.append(response)
+
+        # 3. Combine results into final response
+        final_response = " ".join(results)
+
+        return {
+            "type": "final_response",
+            "content": final_response
+        }
 
     def respond(self, user_input: str) -> str:
-        # Wrapper for backward compatibility if needed
-        return self.handle_input(user_input)
+        # Backward compatibility wrapper
+        result = self.handle_input(user_input)
+        return result["content"]

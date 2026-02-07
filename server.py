@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from assistant.voice.voice_controller import VoiceController
+from assistant.voice.conversation_manager import ConversationManager
 from assistant.orchestrator import Orchestrator
 
 app = FastAPI()
@@ -65,27 +66,37 @@ def handle_voice_event(event_type: str, data: Any):
 async def process_and_respond(command: str):
     """Async wrapper to handle LLM processing without blocking"""
     try:
-        # 1. Generate Response
-        response_text = orchestrator.handle_input(command)
+        # 1. Generate Response (Now returns a Dict)
+        response_data = orchestrator.handle_input(command)
         
+        response_text = response_data.get("content", "I encountered an error.")
+        tool_used = response_data.get("tool", None)
+
         # 2. Update UI
         if active_socket:
             await active_socket.send_json({"type": "ai_response", "payload": response_text})
-        
-        # 3. Speak Response (CRITICAL FIX: Run in Thread Pool to avoid blocking Loop)
-        # This prevents the "asyncio.run() cannot be called" error
+            if tool_used:
+                 await active_socket.send_json({"type": "state_change", "payload": "executing_tool"})
+
+        # 3. Speak Response
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, voice.speak, response_text)
         
         # 4. Mark processing complete
-        voice.conv_manager.is_processing = False
+        # ✅ This now works because we injected the manager below
+        if voice.conv_manager:
+            voice.conv_manager.is_processing = False
         
     except asyncio.CancelledError:
         print("⚠️ LLM task cancelled (user interrupted)")
-        voice.conv_manager.is_processing = False
+        if voice.conv_manager:
+            voice.conv_manager.is_processing = False
         raise
 
+# ✅ FIX: Initialize Manager and Inject into Controller
+conv_manager = ConversationManager()
 voice = VoiceController(on_event=handle_voice_event)
+voice.conv_manager = conv_manager
 
 @app.on_event("startup")
 async def startup():
