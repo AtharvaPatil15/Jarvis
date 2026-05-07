@@ -1,7 +1,7 @@
-# assistant/tools/smart_search.py
 import requests
-from assistant.tools.base import BaseTool
 from ddgs import DDGS
+
+from jarvis_backend.tools.base import BaseTool
 
 
 class SmartSearchTool(BaseTool):
@@ -10,42 +10,33 @@ class SmartSearchTool(BaseTool):
     requires_permission = False
 
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (JarvisAssistant/1.0)"
+        "User-Agent": "Mozilla/5.0 (JarvisAssistant/1.0)",
     }
 
     def run(self, **kwargs) -> str:
-        """
-        Robust, Grabber-style logic:
-        - Use DuckDuckGo text search (ddgs)
-        - Prefer snippets (most reliable)
-        - Lightly fetch pages if possible
-        """
         query = kwargs.get("query", "")
-        
         if not query:
             return "Error: 'query' parameter is required."
 
         collected = []
-
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=5))
 
         if not results:
             return "No relevant information was found online."
 
-        for r in results:
-            snippet = r.get("body")
-            url = r.get("href")
+        for result in results:
+            snippet = result.get("body")
+            url = result.get("href")
 
             if snippet:
                 collected.append(snippet)
 
-            # Page fetch is optional — snippets are enough
             if url:
                 try:
-                    resp = requests.get(url, headers=self.HEADERS, timeout=6)
-                    if resp.status_code == 200:
-                        collected.append(resp.text[:2000])
+                    response = requests.get(url, headers=self.HEADERS, timeout=6)
+                    if response.status_code == 200:
+                        collected.append(response.text[:2000])
                 except Exception:
                     pass
 

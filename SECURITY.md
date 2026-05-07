@@ -38,7 +38,7 @@ When using Jarvis Assistant:
 - Review network requests in the codebase
 
 ### Memory & Data Storage
-- Assistant memory is stored locally in `assistant_memory.json`
+- Assistant memory is stored locally in `data/state/assistant_memory.json`
 - No data is sent to third parties except:
   - Speech recognition API (Google)
   - LLM API (Gemini or LM Studio)

@@ -24,7 +24,7 @@ These files are automatically excluded by `.gitignore`:
 - ❌ `node_modules/` - Node.js dependencies
 - ❌ `__pycache__/` - Python cache files
 - ❌ `.next/` - Next.js build output
-- ❌ `assistant_memory.json` - Your personal assistant memory
+- ❌ `data/state/assistant_memory.json` - Your personal assistant memory
 - ❌ `*.mp3` - Audio response files
 
 ## 📝 Next Steps: Push to GitHub

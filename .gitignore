@@ -4,6 +4,7 @@ venv/
 env/
 ENV/
 __pycache__/
+.pycache_tmp/
 *.py[cod]
 *$py.class
 *.so
@@ -25,9 +26,9 @@ yarn-error.log*
 
 # Next.js
 .next/
+apps/web/.next/
 out/
 *.tsbuildinfo
-next-env.d.ts
 
 # Environment Variables & Secrets
 .env
@@ -35,9 +36,9 @@ next-env.d.ts
 .env.development.local
 .env.test.local
 .env.production.local
-key.txt
 *.key
 secrets.json
+config/local/
 
 # IDE & Editor
 .vscode/
@@ -48,12 +49,12 @@ secrets.json
 .DS_Store
 Thumbs.db
 
-# Runtime & Memory Files
-assistant_memory.json
-assistant_memory.db
+# Runtime & State
 *.log
-*.mp3
-response*.mp3
+data/runtime/audio/
+data/state/assistant_memory.json
+data/state/assistant_memory.db
+data/state/JARVIS_CONTEXT.md
 
 # Build & Distribution
 dist/
@@ -66,11 +67,6 @@ build/
 electron-dist/
 release-builds/
 
-# OS Files
-.DS_Store
-Thumbs.db
-desktop.ini
-
 # Testing
 coverage/
 .nyc_output/
@@ -82,4 +78,3 @@ coverage/
 *.tmp
 *.temp
 *.bak
-*.swp

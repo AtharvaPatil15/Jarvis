@@ -18,7 +18,7 @@ Thank you for your interest in contributing to Jarvis Assistant! This document p
    python -m venv .venv
    .venv\Scripts\activate  # Windows
    # source .venv/bin/activate  # Linux/Mac
-   pip install -r requirements.txt
+   pip install -r apps/backend/requirements.txt
    ```
 
    **React Frontend:**
@@ -66,8 +66,8 @@ Examples:
 
 Before submitting a PR:
 1. Test your changes thoroughly
-2. Ensure Python code works: `python main.py`
-3. Ensure frontend builds: `npm run build`
+2. Ensure Python code works: `python apps/backend/run_cli.py`
+3. Ensure frontend builds: `npm run build:web`
 4. Check for linting errors
 
 ## Pull Request Process

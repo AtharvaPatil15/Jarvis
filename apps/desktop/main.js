@@ -1,38 +1,33 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 
-// 1. Enable specific flags for Transparent GPU rendering
-app.commandLine.appendSwitch('enable-transparent-visuals');
-app.commandLine.appendSwitch('disable-gpu-driver-bug-workarounds');
+app.commandLine.appendSwitch("enable-transparent-visuals");
+app.commandLine.appendSwitch("disable-gpu-driver-bug-workarounds");
 
 let mainWindow;
+const webUrl = process.env.JARVIS_WEB_URL || "http://localhost:3000";
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 420,
     height: 700,
-    x: 0, // Set position if needed
-    y: 0, 
-
+    x: 0,
+    y: 0,
     frame: false,
-    // 2. Re-enable Transparency
     transparent: true,
-    backgroundColor: "#00000000", // Fully transparent hex
-
+    backgroundColor: "#00000000",
     resizable: false,
-    hasShadow: false, // Shadows can sometimes cause artifacts
-
+    hasShadow: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, "preload.js"),
-      backgroundThrottling: false, // Keep animating in background
-    }
+      backgroundThrottling: false,
+    },
   });
 
-  mainWindow.loadURL("http://localhost:3000");
+  mainWindow.loadURL(webUrl);
   mainWindow.setMenu(null);
-  // mainWindow.webContents.openDevTools({ mode: 'detach' }); // Optional
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -40,7 +35,6 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // 3. Small delay to ensure GPU is ready
   setTimeout(createWindow, 300);
 
   app.on("activate", () => {

@@ -1,5 +1,7 @@
 from datetime import datetime
-from assistant.tools.base_tool import BaseTool
+
+from jarvis_backend.tools.base_tool import BaseTool
+
 
 class TimeTool(BaseTool):
     name = "time"

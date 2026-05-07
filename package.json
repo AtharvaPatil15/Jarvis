@@ -1,13 +1,18 @@
 {
-  "name": "jarvis-ui",
+  "name": "jarvis-assistant-monorepo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "app": "electron electron/main.js"
+    "dev": "npm run dev:web",
+    "dev:web": "next dev ./apps/web",
+    "build": "npm run build:web",
+    "build:web": "next build ./apps/web",
+    "start": "npm run start:web",
+    "start:web": "next start ./apps/web",
+    "lint": "npm run lint:web",
+    "lint:web": "next lint ./apps/web",
+    "desktop": "electron ./apps/desktop/main.js",
+    "dev:backend": "python apps/backend/run_server.py"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

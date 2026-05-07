@@ -1,8 +1,11 @@
-# assistant/memory/store.py
 import json
-from pathlib import Path
 
-MEMORY_FILE = Path("assistant_memory.json")
+from jarvis_backend.paths import STATE_DIR, ensure_runtime_dirs
+
+
+ensure_runtime_dirs()
+MEMORY_FILE = STATE_DIR / "assistant_memory.json"
+
 
 class MemoryStore:
     def __init__(self):
@@ -13,9 +16,8 @@ class MemoryStore:
     def add_turn(self, user_text: str, assistant_text: str):
         self.conversation_history.append({
             "user": user_text,
-            "assistant": assistant_text
+            "assistant": assistant_text,
         })
-        # Keep only last 5 turns
         self.conversation_history = self.conversation_history[-5:]
 
     def get_recent_history(self):
