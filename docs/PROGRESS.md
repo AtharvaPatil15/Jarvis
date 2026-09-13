@@ -6,7 +6,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | ID | Task | Status | Date | Proof | Notes |
 |---|---|---|---|---|---|
 | P0-T1 | Git baseline on branch `testing` | DONE | 2026-09-14 | `docs/proof/P0-T1.md` | Branch `testing` built on `origin/main`; key removed; ignore rules added |
-| P0-T2 | Python venv, test harness, `verify_all.ps1` | TODO | | | |
+| P0-T2 | Python venv, test harness, `verify_all.ps1` | DONE | 2026-09-14 | `docs/proof/P0-T2.md` | Venv (3.12.4), harness, gate pass/fail proven |
 | P0-T3 | Ollama models + capability probe | TODO | | | |
 | P0-T4 | `Settings` + `events.py` | TODO | | | |
 | P1-T1 | Server app factory, event hub, crash fix, `FakeLLM` | TODO | | | |

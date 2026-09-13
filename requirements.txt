@@ -1,19 +1,18 @@
-# requirements.txt
+# Runtime dependencies. Later tasks append to this file.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+websockets>=12
+httpx>=0.27
+pydantic>=2.8
+pydantic-settings>=2.4
+requests>=2.32
+beautifulsoup4>=4.12
+ddgs
+numpy>=2.0
+sounddevice>=0.5
 
-# Web Framework & API
-fastapi
-uvicorn
-websockets
-
-# Web scraping & search
-requests
-beautifulsoup4
-duckduckgo-search
-
-# Voice mode dependencies
+# Legacy voice stack - removed in P3-T6
 pvporcupine
-sounddevice
-numpy
 SpeechRecognition
 PyAudio
 edge-tts
