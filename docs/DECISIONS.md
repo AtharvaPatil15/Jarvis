@@ -123,3 +123,14 @@ Format:
   57 requests failing, all `ProviderHeaderTimeoutError`. Error streaks were 1×7, 2×4, 3×2 and 4×2, each recovering within
   7 minutes. A trigger of 4 would have abandoned a working session twice for 20 minutes of weaker offline drafts.
 - Alternatives rejected: keeping 4 (needless fallbacks); no limit at all (a dead provider would stall work forever).
+
+## D-012 — P0-T3 probe confirms `qwen3:8b` + `nomic-embed-text` defaults
+- Date: 2026-09-14
+- Task: P0-T3
+- Decision: Keep `chat_model = qwen3:8b`, `embed_model = nomic-embed-text`, and `llm_disable_thinking = True` as the defaults
+  for P0-T4. No fallback model is needed.
+- Reason: The probe against the live Ollama server passed every capability check: `think_false_supported = true`, plain chat
+  returned "pong" with no thinking block, tool_call hit 3/3 on `get_time`, the tool-result round trip returned the injected
+  time, streaming produced 20 chunks, and embeddings returned dimension 768 for both inputs.
+- Alternatives rejected: `qwen2.5:7b` (not needed — `qwen3:8b` tool calls were reliable), `llm_disable_thinking = False`
+  (the model honours `think:false`).

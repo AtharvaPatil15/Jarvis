@@ -1,0 +1,61 @@
+{
+  "model": "qwen3:8b",
+  "embed_model": "nomic-embed-text",
+  "checks": {
+    "models_present": {
+      "ok": true,
+      "installed": [
+        "llama3.2:3b",
+        "llama3.2:latest",
+        "llama3:latest",
+        "nomic-embed-text:latest",
+        "qwen3-8b-32k:latest",
+        "qwen3:8b"
+      ]
+    },
+    "plain_chat": {
+      "ok": true,
+      "content": "pong",
+      "seconds": 4.15
+    },
+    "tool_call": {
+      "ok": true,
+      "hits": 3,
+      "attempts": [
+        {
+          "called": [
+            "get_time"
+          ],
+          "seconds": 0.32
+        },
+        {
+          "called": [
+            "get_time"
+          ],
+          "seconds": 0.26
+        },
+        {
+          "called": [
+            "get_time"
+          ],
+          "seconds": 0.25
+        }
+      ]
+    },
+    "tool_result_round_trip": {
+      "ok": true,
+      "content": "The current local time is 14:05."
+    },
+    "streaming": {
+      "ok": true,
+      "chunks": 20
+    },
+    "embeddings": {
+      "ok": true,
+      "dim": 768
+    }
+  },
+  "think_false_supported": true,
+  "embedding_dim": 768,
+  "ok": true
+}
