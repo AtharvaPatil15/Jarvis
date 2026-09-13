@@ -1,53 +1,64 @@
-// hooks/useAudioAnalyzer.ts
-import { useRef, useEffect } from 'react';
-import * as Tone from 'tone';
+import { useRef, useEffect, useState } from 'react';
 
 export const useAudioAnalyzer = () => {
-  const analyzerRef = useRef<Tone.Analyser | null>(null);
-  const dataArray = useRef<Float32Array>(new Float32Array(32));
-  const isRunning = useRef(false);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataRef = useRef<Uint8Array | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const startAudio = async () => {
-      // Create a dummy oscillator for "idle" hum simulation if no mic
-      // In a real app, you would swap this with Tone.UserMedia()
-      const osc = new Tone.Oscillator(50, "sine").toDestination();
-      const noise = new Tone.Noise("pink").start();
-      const filter = new Tone.Filter(100, "lowpass").toDestination();
-      
-      noise.connect(filter);
-      
-      // We'll simulate input for this visual demo
-      // In production: const mic = new Tone.UserMedia(); await mic.open();
-      
-      const analyser = new Tone.Analyser("fft", 32);
-      analyzerRef.current = analyser;
-      
-      // Connect simulation to analyzer (Volume low to not blast speakers)
-      osc.connect(analyser); 
-      osc.volume.value = -Infinity; // Silent but data flows
-      osc.start();
+    // Only initialize in browser environment
+    if (typeof window === 'undefined') return;
 
-      isRunning.current = true;
+    const initMic = async () => {
+      try {
+        // Check if getUserMedia is available
+        if (!navigator?.mediaDevices?.getUserMedia) {
+          console.log("⚠️ Audio API not available");
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const audioCtx = new AudioContext();
+        const source = audioCtx.createMediaStreamSource(stream);
+
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+
+        source.connect(analyser);
+
+        analyserRef.current = analyser;
+        dataRef.current = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+        audioCtxRef.current = audioCtx;
+        setIsReady(true);
+
+        console.log("🎤 Audio Analyzer Ready");
+      } catch (err) {
+        console.log("⚠️ Mic access denied or unavailable");
+      }
     };
 
-    startAudio();
-
-    return () => {
-      // Cleanup
-      isRunning.current = false;
-    };
+    initMic();
   }, []);
 
-  const getAudioData = () => {
-    if (analyzerRef.current) {
-      const values = analyzerRef.current.getValue();
-      // Tone.js returns Float32Array in dB usually, we normalize for visualizer
-      // Simulating normalized 0-1 data for the UI
-      return Math.random() * 0.5; // Mocking return for purely visual demo stability
+  const getAmplitude = () => {
+    if (!analyserRef.current || !dataRef.current || !isReady) return 0;
+
+    try {
+      // @ts-ignore - Web Audio API type definition mismatch
+      analyserRef.current.getByteFrequencyData(dataRef.current);
+
+      let sum = 0;
+      for (let i = 0; i < dataRef.current.length; i++) {
+        sum += dataRef.current[i];
+      }
+
+      return (sum / dataRef.current.length) / 255;
+    } catch (err) {
+      return 0;
     }
-    return 0;
   };
 
-  return { getAudioData };
+  return { getAmplitude, isReady };
 };

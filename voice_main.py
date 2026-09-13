@@ -1,4 +1,5 @@
 import sys
+import os
 import random
 from assistant.orchestrator import Orchestrator
 from assistant.voice.stt import SpeechToText
@@ -7,8 +8,7 @@ from assistant.memory.store import MemoryStore
 from assistant.voice.mic_selector import auto_select_best_mic
 from assistant.voice.wake_word import WakeWordListener
 
-# Access key for Porcupine (Keep your existing key here)
-PORCUPINE_ACCESS_KEY = "ycGaIQbL2ZWI8r2MfkZlGZN/huiTFCQwSWNLW0Liu7hilS1fG22VJA=="
+PORCUPINE_ACCESS_KEY = os.environ.get("JARVIS_PORCUPINE_ACCESS_KEY", "")
 
 def get_wake_response():
     """Returns a random, natural response to being woken up."""

@@ -83,3 +83,15 @@ coverage/
 *.temp
 *.bak
 *.swp
+
+# --- Added in P0-T1 ---
+PROJECT_CONTEXT.md
+PROJECT_RAW_DUMP.md
+models/
+data/
+*.onnx
+*.bin
+*.wav
+test-results/
+playwright-report/
+docs/proof/tmp/

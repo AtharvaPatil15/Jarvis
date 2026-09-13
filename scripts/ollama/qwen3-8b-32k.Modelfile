@@ -1,0 +1,5 @@
+# Local fallback model for OpenCode: qwen3:8b with a 32k context window.
+# OpenCode sends AGENTS.md, docs/PLAN.md and tool definitions on every request, which does not fit Ollama's default context.
+# Create it with: ollama create qwen3-8b-32k -f scripts/ollama/qwen3-8b-32k.Modelfile
+FROM qwen3:8b
+PARAMETER num_ctx 32768

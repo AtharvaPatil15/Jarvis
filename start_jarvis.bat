@@ -1,4 +1,4 @@
-python start_backend.pypython start_backend.py@echo off
+@echo off
 echo.
 echo ================================================
 echo   JARVIS ASSISTANT - Desktop Mode

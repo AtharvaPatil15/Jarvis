@@ -1,3 +1,4 @@
+import os
 import pvporcupine
 import sounddevice as sd
 import numpy as np
@@ -63,3 +64,17 @@ class WakeWordListener:
         except Exception as e:
             print(f"\n❌ Wake-word audio error: {e}")
             return False
+
+
+# Simplified engine for the new voice controller
+class WakeWordEngine:
+    def __init__(self):
+        # This is a simplified stub that uses the same wake word listener
+        self.listener = WakeWordListener(
+            access_key=os.environ.get("JARVIS_PORCUPINE_ACCESS_KEY", ""),
+            keyword="computer"
+        )
+    
+    def wait_for_wake(self):
+        """Waits for wake word to be detected"""
+        return self.listener.listen()
