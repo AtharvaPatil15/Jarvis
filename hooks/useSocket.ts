@@ -1,63 +1,31 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { applyServerEvent } from '@/lib/socketEvents';
 import { useAssistantStore } from '@/store/assistantStore';
+
+const SOCKET_URL = process.env.NEXT_PUBLIC_JARVIS_WS_URL ?? 'ws://127.0.0.1:8000/ws';
 
 export const useSocket = () => {
   const setStatus = useAssistantStore((state) => state.setStatus);
   const setTranscript = useAssistantStore((state) => state.setTranscript);
+  const setActiveTool = useAssistantStore((state) => state.setActiveTool);
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // 1. Connect to the Python Brain
-    const ws = new WebSocket('ws://localhost:8000/ws');
+    const ws = new WebSocket(SOCKET_URL);
     socketRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('✅ Visuals Connected to Brain');
-      setTranscript("Systems Online.");
-    };
-
-    ws.onclose = () => {
-      console.log('❌ Visuals Disconnected');
-      setTranscript("Connection Lost.");
-    };
-
+    ws.onopen = () => setTranscript('Systems online.');
+    ws.onclose = () => setTranscript('Connection lost.');
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        const { type, payload } = data;
-        
-        console.log(`📩 Socket Event: ${type}`, payload);
-
-        // 2. Route events to the Store (Global State)
-        switch (type) {
-          case 'state_change':
-            // payload = 'idle' | 'listening' | 'thinking' | 'speaking' | 'executing_tool'
-            setStatus(payload); 
-            break;
-            
-          case 'user_transcript':
-            setTranscript(`"${payload}"`);
-            break;
-            
-          case 'ai_response':
-            setTranscript(payload);
-            break;
-            
-          case 'wake_word_detected':
-            setStatus('listening');
-            break;
-        }
-      } catch (e) {
-        console.error('Socket Parse Error', e);
+        applyServerEvent(JSON.parse(event.data), { setStatus, setTranscript, setActiveTool });
+      } catch {
+        console.error('Invalid socket message', event.data);
       }
     };
+    return () => ws.close();
+  }, [setStatus, setTranscript, setActiveTool]);
 
-    return () => {
-      if (ws.readyState === 1) ws.close();
-    };
-  }, [setStatus, setTranscript]);
-
-  return socketRef.current;
+  return socketRef;
 };

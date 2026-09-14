@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from contextlib import asynccontextmanager
 from typing import Any
@@ -10,7 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from assistant.config import Settings, get_settings
-from assistant.events import EventType
+from assistant.events import AssistantState, EventType
 from assistant.hub import ConnectionHub
 
 log = logging.getLogger("jarvis.server")
@@ -75,14 +76,30 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
     app.state.llm = llm
     app.state.voice = None
 
+    lock = asyncio.Lock()
+
     async def process_text(text: str) -> str:
-        reply = await asyncio.to_thread(orchestrator.handle_input, text)
-        hub.emit(EventType.AI_RESPONSE, reply)
-        voice = app.state.voice
-        if voice is not None:
-            await asyncio.to_thread(voice.speak, reply)
-            mark_voice_idle(voice)
-        return reply
+        text = text.strip()
+        if not text:
+            return ""
+        async with lock:
+            hub.emit(EventType.USER_TRANSCRIPT, text)
+            hub.emit(EventType.STATE_CHANGE, AssistantState.THINKING)
+            try:
+                reply = await asyncio.to_thread(orchestrator.handle_input, text)
+            except Exception as exc:
+                log.exception("command failed")
+                hub.emit(EventType.ERROR, {"message": str(exc)})
+                hub.emit(EventType.STATE_CHANGE, AssistantState.IDLE)
+                return ""
+            hub.emit(EventType.STATE_CHANGE, AssistantState.RESPONDING)
+            hub.emit(EventType.AI_RESPONSE, reply)
+            voice = app.state.voice
+            if voice is not None:
+                await asyncio.to_thread(voice.speak, reply)
+                mark_voice_idle(voice)
+            hub.emit(EventType.STATE_CHANGE, AssistantState.IDLE)
+            return reply
 
     app.state.process_text = process_text
 
@@ -91,6 +108,8 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             asyncio.run_coroutine_threadsafe(app.state.process_text(str(data)), hub.loop)
             return
         hub.emit(event_type, data)
+        if event_type == "wake_word_detected":
+            hub.emit(EventType.STATE_CHANGE, AssistantState.LISTENING)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:
@@ -103,7 +122,17 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
         await hub.connect(ws)
         try:
             while True:
-                await ws.receive_text()
+                raw = await ws.receive_text()
+                try:
+                    message = json.loads(raw)
+                    kind, payload = message["type"], message.get("payload")
+                except (ValueError, KeyError, TypeError):
+                    hub.emit(EventType.ERROR, {"message": "invalid message: expected JSON {type, payload}"})
+                    continue
+                if kind == "user_text" and isinstance(payload, str):
+                    asyncio.create_task(app.state.process_text(payload))
+                else:
+                    hub.emit(EventType.ERROR, {"message": f"unsupported message type: {kind}"})
         except WebSocketDisconnect:
             pass
         finally:
