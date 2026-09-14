@@ -1,14 +1,12 @@
 import sys
-import os
 import random
+from assistant.config import get_settings
 from assistant.orchestrator import Orchestrator
 from assistant.voice.stt import SpeechToText
 from assistant.voice.tts import TextToSpeech
 from assistant.memory.store import MemoryStore
 from assistant.voice.mic_selector import auto_select_best_mic
 from assistant.voice.wake_word import WakeWordListener
-
-PORCUPINE_ACCESS_KEY = os.environ.get("JARVIS_PORCUPINE_ACCESS_KEY", "")
 
 def get_wake_response():
     """Returns a random, natural response to being woken up."""
@@ -42,7 +40,7 @@ def main():
 
     # Initialize components
     wake_listener = WakeWordListener(
-        access_key=PORCUPINE_ACCESS_KEY,
+        access_key=get_settings().porcupine_access_key,
         keyword="computer",
         device_index=selected["index"],
         sensitivity=0.9
@@ -74,7 +72,7 @@ def main():
         while active_mode:
             print("🎤 Listening for command...")
             try:
-                command = stt.listen(duration=8)
+                command = stt.listen_until_silence()
             except KeyboardInterrupt:
                 active_mode = False
                 break

@@ -1,8 +1,9 @@
-import os
 import pvporcupine
 import sounddevice as sd
 import numpy as np
 import sys
+
+from assistant.config import get_settings
 
 class WakeWordListener:
     def __init__(self, access_key: str, keyword="computer", device_index=None, sensitivity=0.9):
@@ -69,11 +70,12 @@ class WakeWordListener:
 # Simplified engine for the new voice controller
 class WakeWordEngine:
     def __init__(self):
-        # This is a simplified stub that uses the same wake word listener
-        self.listener = WakeWordListener(
-            access_key=os.environ.get("JARVIS_PORCUPINE_ACCESS_KEY", ""),
-            keyword="computer"
-        )
+        key = get_settings().porcupine_access_key
+        if not key:
+            raise RuntimeError(
+                "Legacy Porcupine wake word needs JARVIS_PORCUPINE_ACCESS_KEY; it is replaced by openWakeWord in P3."
+            )
+        self.listener = WakeWordListener(access_key=key, keyword="computer")
     
     def wait_for_wake(self):
         """Waits for wake word to be detected"""

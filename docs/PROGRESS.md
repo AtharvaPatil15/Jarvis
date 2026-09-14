@@ -10,7 +10,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P0-T3 | Ollama models + capability probe | DONE | 2026-09-14 | `docs/proof/P0-T3.md` | Probe all ok; `think:false` supported; emb 768; live test passes |
 | P0-T4 | `Settings` + `events.py` | DONE | 2026-09-14 | `docs/proof/P0-T4.md` | Settings + events; 10 unit tests pass; state contract vs TS |
 | P1-T1 | Server app factory, event hub, crash fix, `FakeLLM` | DONE | 2026-09-14 | `docs/proof/P1-T1.md` | `create_app()` factory, ordered hub, conv_manager crash fix, FakeLLM; 27 unit pass; gate ok |
-| P1-T2 | `voice_main.py` fix, key via settings, guard tests | TODO | | | |
+| P1-T2 | `voice_main.py` fix, key via settings, guard tests | DONE | 2026-09-14 | `docs/proof/P1-T2.md` | STT call fixed; key from settings; 5 guard tests pass; gate ok |
 | P1-T3 | `user_text` over WS, state events, UI mapping, preload | TODO | | | |
 | P2-T1 | `LLMClient` (Ollama native, streaming, embeddings) | TODO | | | |
 | P2-T2 | `BaseTool`, `ToolRegistry`, `get_time`, `calculate` | TODO | | | |
