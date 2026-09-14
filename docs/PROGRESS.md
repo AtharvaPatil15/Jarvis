@@ -14,7 +14,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P1-T3 | `user_text` over WS, state events, UI mapping, preload | DONE | 2026-09-14 | `docs/proof/P1-T3.md` | Ordered state sequence; WS tolerant of bad input; vitest/tsc/gate pass |
 | P2-T1 | `LLMClient` (Ollama native, streaming, embeddings) | DONE | 2026-09-14 | `docs/proof/P2-T1.md` | LLMClient + _ThinkFilter; 15 unit + 4 live pass; gate ok (D-014 fix) |
 | P2-T2 | `BaseTool`, `ToolRegistry`, `get_time`, `calculate` | DONE | 2026-09-14 | `docs/proof/P2-T2.md` | Typed tool framework, registry, get_time + safe calculator; 20 unit pass; gate ok |
-| P2-T3 | `Session` + `build_system_prompt` | TODO | | | |
+| P2-T3 | `Session` + `build_system_prompt` | DONE | 2026-09-14 | `docs/proof/P2-T3.md` | Turn-safe session + spoken system prompt; 7 unit pass; gate ok |
 | P2-T4 | Permission gates + `Orchestrator` agent loop | TODO | | | |
 | P2-T5 | `web_search`, `fetch_page`, `get_weather` | TODO | | | |
 | P2-T6 | Orchestrator into server + live conversation proof | TODO | | | |
