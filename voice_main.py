@@ -1,7 +1,7 @@
 import sys
 import random
 from assistant.config import get_settings
-from assistant.orchestrator import Orchestrator
+from assistant.legacy_orchestrator import Orchestrator
 from assistant.voice.stt import SpeechToText
 from assistant.voice.tts import TextToSpeech
 from assistant.memory.store import MemoryStore

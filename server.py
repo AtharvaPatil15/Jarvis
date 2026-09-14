@@ -40,7 +40,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
     hub = ConnectionHub()
     llm = llm if llm is not None else build_llm(settings)
 
-    from assistant.orchestrator import Orchestrator
+    from assistant.legacy_orchestrator import Orchestrator
 
     orchestrator = Orchestrator(llm=llm)
 

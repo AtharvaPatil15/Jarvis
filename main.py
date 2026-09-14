@@ -1,5 +1,5 @@
 # main.py
-from assistant.orchestrator import Orchestrator
+from assistant.legacy_orchestrator import Orchestrator
 from assistant.ui.cli import CLI
 
 def main():
