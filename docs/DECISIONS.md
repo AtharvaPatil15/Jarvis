@@ -147,3 +147,18 @@ Format:
   attempted. The branch `testing` is the required, safe target; this is purely a rule-matching overreach, not a history rewrite.
 - Alternatives rejected: pushing `refs/heads/testing` (would circumvent the deny control), editing `opencode.json` to fix the
   pattern (owner-owned config; changing a deny into an allow is not mine to make).
+
+## D-014 — Two bugs in the P2-T1 plan's provided code/test were fixed
+- Date: 2026-09-14
+- Task: P2-T1
+- Decision: (a) `_partial_suffix` in `assistant/brain/llm.py` now only treats a partial opening-tag suffix as worth holding back
+  when it is at least 2 characters (`range(..., 1, -1)` instead of `range(..., 0, -1)`). (b) The streaming think-split test
+  fixture used a non-standard ` thinking` tag; changed the chunk contents to `" thi"` / `"nking\n response"` so it forms a real
+  ` thinking…response` block, matching `_OPEN`/`_CLOSE` and the non-stream strip regex.
+- Reason: As provided, the plan's implementation failed two of its own unit tests. A single trailing space matches the 1-char
+  prefix of `" thinking"`, so `_partial_suffix` wrongly withheld `"The "`'s space and it leaked into later chunks
+  (`['The', ' answer', ' is 4.']`). Separately, the fixture joined to `" thinkingsecret responseHi"`, which the
+  ` thinking…response` filter cannot strip (no leading space before "think"), so no ` thinking…response` span ever formed.
+  Fixing both makes the implementation and tests mutually consistent without weakening any assertion.
+- Alternatives rejected: implementing a second ` thinking`-tag stripping path (the model is told `think:false`; the plan's
+  single ` thinking…response` format is the documented contract), weakening the streaming fidelity assertion (wrong).
