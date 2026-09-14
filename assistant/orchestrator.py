@@ -7,8 +7,8 @@ from assistant.tools.smart_search import SmartSearchTool
 from assistant.memory.store import MemoryStore
 
 class Orchestrator:
-    def __init__(self):
-        self.llm = LocalLLM()
+    def __init__(self, llm=None):
+        self.llm = llm if llm is not None else LocalLLM()
         self.planner = Planner(self.llm)
         self.memory = MemoryStore()
         self.search_tool = SmartSearchTool()

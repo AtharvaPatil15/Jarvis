@@ -1,5 +1,25 @@
 # assistant/brain/llm.py
 import requests
+from dataclasses import dataclass
+from typing import Any
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    id: str
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ChatResult:
+    content: str
+    tool_calls: list[ToolCall]
+
+
+class LLMError(RuntimeError):
+    """The language model backend failed or returned an unusable response."""
+
 
 class LocalLLM:
     def __init__(
@@ -37,3 +57,9 @@ class LocalLLM:
 
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
+
+    def health(self) -> bool:
+        try:
+            return requests.get(f"{self.base_url}/api/tags", timeout=2).status_code == 200
+        except requests.RequestException:
+            return False

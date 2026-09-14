@@ -1,6 +1,7 @@
 import threading
 import time
 
+from .conversation_manager import ConversationManager
 from .stt import SpeechToText
 from .wake_word import WakeWordEngine
 from .tts import TextToSpeech
@@ -14,6 +15,7 @@ class VoiceController:
         self.stt = SpeechToText()
         self.wake = WakeWordEngine()
         self.tts = TextToSpeech()
+        self.conv_manager = ConversationManager()
 
         self.running = False
 
@@ -46,6 +48,7 @@ class VoiceController:
                     print("No command captured, continue listening")
                     continue
 
+                self.conv_manager.is_processing = True
                 self.on_event("process_command", command)
 
                 # Small cooldown prevents mic clipping

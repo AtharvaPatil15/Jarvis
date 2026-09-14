@@ -1,111 +1,112 @@
-# server.py
+"""JARVIS backend. Run: .venv/Scripts/python.exe -m uvicorn server:create_app --factory --host 127.0.0.1 --port 8000"""
+from __future__ import annotations
+
 import asyncio
+import logging
+from contextlib import asynccontextmanager
 from typing import Any
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from assistant.voice.voice_controller import VoiceController
-from assistant.orchestrator import Orchestrator
 
-app = FastAPI()
+from assistant.config import Settings, get_settings
+from assistant.events import EventType
+from assistant.hub import ConnectionHub
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+log = logging.getLogger("jarvis.server")
 
-orchestrator = Orchestrator()
-active_socket: WebSocket | None = None
-main_loop: asyncio.AbstractEventLoop | None = None
-current_llm_task: asyncio.Future | None = None
 
-def handle_voice_event(event_type: str, data: Any):
-    """
-    Thread-Safe Callback: Pushes updates from Voice Thread to FastAPI Loop.
-    """
-    print(f"⚡ Event: {event_type} | Data: {data}")
-    
-    # Bridge Background Thread -> Main Async Loop
-    if main_loop and main_loop.is_running():
-        # 1. Handle Command Processing
-        if event_type == "process_command":
-            global current_llm_task
-            
-            # Cancel any ongoing LLM task
-            if current_llm_task and not current_llm_task.done():
-                current_llm_task.cancel()
-            
-            current_llm_task = asyncio.run_coroutine_threadsafe(
-                process_and_respond(data),
-                main_loop
-            )
-            return
-        
-        # Handle merge commands (interrupts)
-        if event_type == "merge_command":
-            if current_llm_task and not current_llm_task.done():
-                current_llm_task.cancel()
-            
-            current_llm_task = asyncio.run_coroutine_threadsafe(
-                process_and_respond(data),
-                main_loop
-            )
-            return
+def build_llm(settings: Settings) -> Any:
+    if settings.llm_backend == "fake":
+        from assistant.brain.fake_llm import FakeLLM
 
-        # 2. Broadcast to UI
-        if active_socket:
-            payload = {"type": event_type, "payload": data}
+        return FakeLLM()
+    from assistant.brain.llm import LocalLLM
+
+    return LocalLLM(base_url=settings.ollama_url, model=settings.chat_model)
+
+
+def mark_voice_idle(voice: Any) -> None:
+    manager = getattr(voice, "conv_manager", None)
+    if manager is not None:
+        manager.is_processing = False
+
+
+def create_app(settings: Settings | None = None, *, llm: Any | None = None,
+               enable_voice: bool | None = None) -> FastAPI:
+    settings = settings or get_settings()
+    voice_wanted = settings.voice_enabled if enable_voice is None else enable_voice
+    hub = ConnectionHub()
+    llm = llm if llm is not None else build_llm(settings)
+
+    from assistant.orchestrator import Orchestrator
+
+    orchestrator = Orchestrator(llm=llm)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        hub.bind_loop(asyncio.get_running_loop())
+        if voice_wanted:
             try:
-                asyncio.run_coroutine_threadsafe(active_socket.send_json(payload), main_loop)
-            except Exception as e:
-                print(f"❌ WebSocket Send Error: {e}")
+                from assistant.voice.voice_controller import VoiceController
 
-async def process_and_respond(command: str):
-    """Async wrapper to handle LLM processing without blocking"""
-    try:
-        # 1. Generate Response
-        response_text = orchestrator.handle_input(command)
-        
-        # 2. Update UI
-        if active_socket:
-            await active_socket.send_json({"type": "ai_response", "payload": response_text})
-        
-        # 3. Speak Response (CRITICAL FIX: Run in Thread Pool to avoid blocking Loop)
-        # This prevents the "asyncio.run() cannot be called" error
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, voice.speak, response_text)
-        
-        # 4. Mark processing complete
-        voice.conv_manager.is_processing = False
-        
-    except asyncio.CancelledError:
-        print("⚠️ LLM task cancelled (user interrupted)")
-        voice.conv_manager.is_processing = False
-        raise
+                voice = VoiceController(on_event=on_voice_event)
+                voice.start()
+                app.state.voice = voice
+            except Exception:
+                log.exception("voice disabled: voice controller failed to start")
+                app.state.voice = None
+        try:
+            yield
+        finally:
+            if app.state.voice is not None:
+                app.state.voice.stop()
+            await hub.close()
 
-voice = VoiceController(on_event=handle_voice_event)
+    app = FastAPI(title="JARVIS", lifespan=lifespan)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.state.hub = hub
+    app.state.settings = settings
+    app.state.llm = llm
+    app.state.voice = None
 
-@app.on_event("startup")
-async def startup():
-    global main_loop
-    main_loop = asyncio.get_running_loop()
-    voice.start()
+    async def process_text(text: str) -> str:
+        reply = await asyncio.to_thread(orchestrator.handle_input, text)
+        hub.emit(EventType.AI_RESPONSE, reply)
+        voice = app.state.voice
+        if voice is not None:
+            await asyncio.to_thread(voice.speak, reply)
+            mark_voice_idle(voice)
+        return reply
 
-@app.on_event("shutdown")
-async def shutdown():
-    voice.stop()
+    app.state.process_text = process_text
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    global active_socket
-    await websocket.accept()
-    active_socket = websocket
-    print("🟢 Desktop UI Connected")
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        print("🔴 Desktop UI Disconnected")
-        active_socket = None
+    def on_voice_event(event_type: str, data: Any) -> None:
+        if event_type in ("process_command", "merge_command"):
+            asyncio.run_coroutine_threadsafe(app.state.process_text(str(data)), hub.loop)
+            return
+        hub.emit(event_type, data)
+
+    @app.get("/health")
+    async def health() -> dict[str, Any]:
+        check = getattr(app.state.llm, "health", None)
+        llm_ok = bool(await asyncio.to_thread(check)) if callable(check) else False
+        return {"status": "ok", "llm": llm_ok, "voice": app.state.voice is not None}
+
+    @app.websocket("/ws")
+    async def websocket_endpoint(ws: WebSocket) -> None:
+        await hub.connect(ws)
+        try:
+            while True:
+                await ws.receive_text()
+        except WebSocketDisconnect:
+            pass
+        finally:
+            hub.disconnect(ws)
+
+    return app
