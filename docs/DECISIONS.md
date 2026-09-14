@@ -134,3 +134,16 @@ Format:
   time, streaming produced 20 chunks, and embeddings returned dimension 768 for both inputs.
 - Alternatives rejected: `qwen2.5:7b` (not needed — `qwen3:8b` tool calls were reliable), `llm_disable_thinking = False`
   (the model honours `think:false`).
+
+## D-013 — P1 phase-end `git push origin testing` is blocked by the permission config
+- Date: 2026-09-14
+- Task: P1-T3 (phase-end push)
+- Decision: Do not push after P1-T3. `git push origin testing` is rejected by `opencode.json` because the deny rule
+  `git push origin Test*` is matched case-insensitively and so also matches the branch `testing`. Leave the two committed
+  phase-1 commits unpushed and retry `git push origin testing` after each later phase.
+- Reason: `opencode.json` has `"git push origin Test*": "deny"` and the permission matcher is case-insensitive, so it catches
+  `testing`. `AGENTS.md` §5 forbids touching `Test`/`main` and forbids editing `opencode.json` model settings; bypassing the
+  deny rule (e.g. `git push origin refs/heads/testing`) would defeat a security control the owner configured, so it was not
+  attempted. The branch `testing` is the required, safe target; this is purely a rule-matching overreach, not a history rewrite.
+- Alternatives rejected: pushing `refs/heads/testing` (would circumvent the deny control), editing `opencode.json` to fix the
+  pattern (owner-owned config; changing a deny into an allow is not mine to make).
