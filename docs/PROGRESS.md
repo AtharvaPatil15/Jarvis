@@ -16,7 +16,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P2-T2 | `BaseTool`, `ToolRegistry`, `get_time`, `calculate` | DONE | 2026-09-14 | `docs/proof/P2-T2.md` | Typed tool framework, registry, get_time + safe calculator; 20 unit pass; gate ok |
 | P2-T3 | `Session` + `build_system_prompt` | DONE | 2026-09-14 | `docs/proof/P2-T3.md` | Turn-safe session + spoken system prompt; 7 unit pass; gate ok |
 | P2-T4 | Permission gates + `Orchestrator` agent loop | DONE | 2026-09-14 | `docs/proof/P2-T4.md` | Agent loop + permission gates; 18 new unit tests pass; gate ok |
-| P2-T5 | `web_search`, `fetch_page`, `get_weather` | TODO | | | |
+| P2-T5 | `web_search`, `fetch_page`, `get_weather` | DONE | 2026-09-14 | `docs/proof/P2-T5.md` | Web + weather tools registered; 17 unit + 3 live pass; gate ok |
 | P2-T6 | Orchestrator into server + live conversation proof | TODO | | | |
 | P3-T1 | Model downloader + `Synthesizer` + sentence splitting | TODO | | | |
 | P3-T2 | `Transcriber` + TTS→STT round trip | TODO | | | |
