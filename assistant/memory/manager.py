@@ -8,6 +8,17 @@ import numpy as np
 
 from assistant.memory.db import MemoryDB
 from assistant.memory.redact import redact
+from assistant.utils.json_utils import extract_json
+
+EXTRACTION_PROMPT = (
+    "You maintain long-term memory for a personal assistant. From the exchange below, extract durable facts about the "
+    "USER that will still matter in future conversations: preferences, names of people close to them, goals, projects, "
+    "routines and personal details they chose to share. Ignore questions, requests, small talk and general world facts. "
+    'Write each fact as a short statement. Reply with JSON only, exactly {"facts": ["..."]}, '
+    'or {"facts": []} when nothing is worth remembering.'
+)
+MAX_FACTS = 5
+MAX_FACT_CHARS = 200
 
 
 @dataclass(frozen=True)
@@ -49,6 +60,24 @@ class MemoryManager:
 
     def forget(self, fact_id: int) -> bool:
         return self._db.delete_fact(fact_id)
+
+    def extract_facts(self, user_text: str, assistant_text: str) -> list[str]:
+        messages = [{"role": "system", "content": EXTRACTION_PROMPT},
+                    {"role": "user", "content": f"USER: {user_text}\nASSISTANT: {assistant_text}"}]
+        data = extract_json(self._llm.chat(messages, temperature=0.0, max_tokens=256).content)
+        facts = data.get("facts") if isinstance(data, dict) else None
+        if not isinstance(facts, list):
+            return []
+        cleaned = [f.strip()[:MAX_FACT_CHARS] for f in facts if isinstance(f, str) and f.strip()]
+        return cleaned[:MAX_FACTS]
+
+    def process_exchange(self, user_text: str, assistant_text: str) -> list[int]:
+        stored = []
+        for fact in self.extract_facts(user_text, assistant_text):
+            fact_id = self.remember(fact)
+            if fact_id is not None:
+                stored.append(fact_id)
+        return stored
 
     @staticmethod
     def _normalised(vector: list[float]) -> np.ndarray:

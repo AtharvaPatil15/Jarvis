@@ -36,11 +36,14 @@ class Orchestrator:
         self.session_id = uuid.uuid4().hex
         self.current_memories: list[str] = []
         self._emit = emit
+        self._background: set[asyncio.Task[None]] = set()
+        self._turn_tools: list[tuple[str, bool]] = []
 
     async def handle(self, text: str, on_delta: Callable[[str], None] | None = None) -> str:
         text = text.strip()
         if not text:
             return ""
+        self._turn_tools = []
         self._emit(EventType.STATE_CHANGE, AssistantState.THINKING)
         self.session.add_user(text)
         await self._log("user", text)
@@ -66,6 +69,11 @@ class Orchestrator:
             self._emit(EventType.STATE_CHANGE, AssistantState.RESPONDING)
         await self._log("assistant", reply)
         self._emit(EventType.AI_RESPONSE, reply)
+        remembered = any(name == "remember" and ok for name, ok in self._turn_tools)
+        if self.memory is not None and reply != APOLOGY and not remembered:
+            task = asyncio.create_task(self._learn(text, reply))
+            self._background.add(task)
+            task.add_done_callback(self._background.discard)
         return reply
 
     async def _log(self, role: str, content: str) -> None:
@@ -84,6 +92,16 @@ class Orchestrator:
         except Exception as exc:
             log.warning("memory search failed: %s", exc)
             return []
+
+    async def _learn(self, user_text: str, reply: str) -> None:
+        try:
+            await asyncio.to_thread(self.memory.process_exchange, user_text, reply)
+        except Exception as exc:
+            log.warning("memory extraction failed: %s", exc)
+
+    async def wait_background(self) -> None:
+        if self._background:
+            await asyncio.gather(*list(self._background), return_exceptions=True)
 
     async def _run(self, text: str, forward: Callable[[str], None], responding: dict[str, bool]) -> str:
         names = await asyncio.to_thread(self.selector.select, text, self.registry) if self.selector else None
@@ -127,4 +145,5 @@ class Orchestrator:
         if len(output) > MAX_TOOL_OUTPUT:
             output = output[:MAX_TOOL_OUTPUT] + " [truncated]"
         self._emit(EventType.TOOL_END, {"id": call.id, "name": call.name, "ok": ok, "summary": output[:200]})
+        self._turn_tools.append((call.name, ok))
         return output
