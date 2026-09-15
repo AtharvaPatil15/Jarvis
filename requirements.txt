@@ -14,6 +14,8 @@ tzdata
 kokoro-onnx
 soundfile
 scipy
+faster-whisper
+jiwer
 
 # Legacy voice stack - removed in P3-T6
 pvporcupine

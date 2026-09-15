@@ -19,7 +19,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P2-T5 | `web_search`, `fetch_page`, `get_weather` | DONE | 2026-09-14 | `docs/proof/P2-T5.md` | Web + weather tools registered; 17 unit + 3 live pass; gate ok |
 | P2-T6 | Orchestrator into server + live conversation proof | DONE | 2026-09-16 | `docs/proof/P2-T6.md` | Agent loop in server + CLI, legacy brain deleted; 116 unit + 4 live pass; transcript 391/782; backend -Stop tree fix (D-018); finished by Claude Code |
 | P3-T1 | Model downloader + `Synthesizer` + sentence splitting | DONE | 2026-09-16 | `docs/proof/P3-T1.md` | Kokoro `bm_george` offline, sentence splitter/buffer, audio utils, downloader; 14 unit + 3 models pass; `/models/` ignore fix (D-019); finished by Claude Code |
-| P3-T2 | `Transcriber` + TTS→STT round trip | TODO | | | |
+| P3-T2 | `Transcriber` + TTS→STT round trip | DONE | 2026-09-16 | `docs/proof/P3-T2.md` | faster-whisper small.en on cuda/float16 (GPU libs installed); WER 0.111/0/0; RTF 0.021; 7 unit + 5 models pass; finished by Claude Code |
 | P3-T3 | `SpeechSegmenter` (Silero VAD) | TODO | | | |
 | P3-T4 | `WakeWordDetector` (openWakeWord) | TODO | | | |
 | P3-T5 | Audio IO, `EchoGuard`, `VoiceController` + barge-in | TODO | | | |
