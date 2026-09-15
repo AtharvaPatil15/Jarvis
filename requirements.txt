@@ -18,6 +18,7 @@ faster-whisper
 jiwer
 pysilero-vad
 openwakeword
+rapidfuzz
 
 # Legacy voice stack - removed in P3-T6
 pvporcupine

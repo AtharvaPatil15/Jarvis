@@ -22,7 +22,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P3-T2 | `Transcriber` + TTS→STT round trip | DONE | 2026-09-16 | `docs/proof/P3-T2.md` | faster-whisper small.en on cuda/float16 (GPU libs installed); WER 0.111/0/0; RTF 0.021; 7 unit + 5 models pass; finished by Claude Code |
 | P3-T3 | `SpeechSegmenter` (Silero VAD) | DONE | 2026-09-16 | `docs/proof/P3-T3.md` | Silero VAD (pysilero-vad 3.4.0) segments real Kokoro speech at pauses, silence+noise ignored; 5 unit + 3 models pass; finished by Claude Code |
 | P3-T4 | `WakeWordDetector` (openWakeWord) | DONE | 2026-09-16 | `docs/proof/P3-T4.md` | Keyless `hey_jarvis` (openwakeword 0.6.0); 4/4 voices trigger (0.996–0.999), no trigger on silence/noise/speech at 0.5; 3 unit + 3 models pass; finished by Claude Code |
-| P3-T5 | Audio IO, `EchoGuard`, `VoiceController` + barge-in | TODO | | | |
+| P3-T5 | Audio IO, `EchoGuard`, `VoiceController` + barge-in | DONE | 2026-09-16 | `docs/proof/P3-T5.md` | Sources/sinks, echo guard, hands-free controller with streaming speech + barge-in; sentence-order bug in plan code fixed (D-020); 5+4+6 pass, controller 5/5 runs; finished by Claude Code |
 | P3-T6 | Voice into server, remove old stack, latency proof | TODO | | | |
 | P4-T1 | `MemoryDB` + `redact` + turn logging | TODO | | | |
 | P4-T2 | `MemoryManager` remember/search/forget + prompt injection | TODO | | | |
@@ -50,3 +50,4 @@ _None yet. For each BLOCKED task record: the exact error output, the three attem
 | Date | After task | `git rev-parse HEAD` | `git ls-remote --heads origin testing` matches |
 |---|---|---|---|
 | 2026-09-16 | P2-T6 (end of phase 2; first successful push since P0-T4, see D-013/D-015) | `59af2e84ec41558c2e42310712df1544e2ca214d` | yes |
+| 2026-09-16 | P3-T4 (end of phase 3a: P3-T1..P3-T4; full gate `verify-20260916-011339.log`) | `7830c5e0738fb1ae88248b632dc8a849ca668dc1` | yes |

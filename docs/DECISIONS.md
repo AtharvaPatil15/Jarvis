@@ -224,3 +224,16 @@ Format:
   forbidden path in AGENTS.md and `verify_all.ps1` is `^models/` (the root download folder), which stays ignored.
 - Alternatives rejected: `git add -f tests/models` (every later task adding a model test would hit the same trap); renaming
   the test folder (the plan and later tasks use `tests/models`).
+
+## D-020 — `VoiceController` queues every spoken sentence through one scheduling channel
+- Date: 2026-09-16
+- Task: P3-T5
+- Decision: In `VoiceController._respond`, `produce()` now puts its remaining sentences and the end marker with
+  `loop.call_soon_threadsafe(sentences.put_nowait, ...)`, the same channel `on_delta` uses, instead of `put_nowait` directly.
+- Reason: With the plan's code, `test_wake_word_then_command_is_answered_and_spoken` and
+  `test_barge_in_stops_playback_and_the_interruption_is_handled` failed 5 of 5 runs: the first streamed sentence was never
+  spoken. `on_delta` schedules released sentences for a later loop turn, but `produce()` put the flushed remainder and `None`
+  immediately, so the queue became `['Done.', None, 'Sure.']` and playback stopped at `None`. A standalone reproduction printed
+  exactly that order, and `['Sure.', 'Done.', None]` when all puts share `call_soon_threadsafe`. The tests were not changed.
+- Alternatives rejected: calling `put_nowait` in `on_delta` when already on the loop thread (two code paths; the real LLM
+  stream may call `on_delta` from a worker thread); changing the test timings (forbidden by the plan).
