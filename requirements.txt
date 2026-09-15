@@ -17,6 +17,7 @@ scipy
 faster-whisper
 jiwer
 pysilero-vad
+openwakeword
 
 # Legacy voice stack - removed in P3-T6
 pvporcupine
