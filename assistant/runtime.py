@@ -45,7 +45,10 @@ def build_runtime(settings: Settings, emit: Emit, gate: PermissionGate, llm: Any
     memory = MemoryManager(db, llm)
     registry = build_default_registry(settings, memory=memory)
     zone = ZoneInfo(settings.timezone)
-    session = Session(lambda: build_system_prompt(settings, datetime.now(zone)), max_chars=settings.history_max_chars)
+    box: dict[str, Orchestrator] = {}
+    session = Session(lambda: build_system_prompt(settings, datetime.now(zone), box["orchestrator"].current_memories),
+                      max_chars=settings.history_max_chars)
     orchestrator = Orchestrator(llm, registry, session, gate, emit, memory=memory, max_steps=settings.max_agent_steps)
+    box["orchestrator"] = orchestrator
     return Runtime(settings=settings, llm=llm, registry=registry, session=session, orchestrator=orchestrator,
                    db=db, memory=memory)

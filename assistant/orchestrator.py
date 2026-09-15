@@ -34,6 +34,7 @@ class Orchestrator:
         self.selector = selector
         self.max_steps = max_steps
         self.session_id = uuid.uuid4().hex
+        self.current_memories: list[str] = []
         self._emit = emit
 
     async def handle(self, text: str, on_delta: Callable[[str], None] | None = None) -> str:
@@ -43,6 +44,7 @@ class Orchestrator:
         self._emit(EventType.STATE_CHANGE, AssistantState.THINKING)
         self.session.add_user(text)
         await self._log("user", text)
+        self.current_memories = await self._recall(text)
         responding = {"on": False}
 
         def forward(chunk: str) -> None:
@@ -73,6 +75,15 @@ class Orchestrator:
             await asyncio.to_thread(self.memory.log_turn, self.session_id, role, content)
         except Exception:
             log.exception("could not log %s turn", role)
+
+    async def _recall(self, text: str) -> list[str]:
+        if self.memory is None:
+            return []
+        try:
+            return [fact.text for fact in await asyncio.to_thread(self.memory.search, text)]
+        except Exception as exc:
+            log.warning("memory search failed: %s", exc)
+            return []
 
     async def _run(self, text: str, forward: Callable[[str], None], responding: dict[str, bool]) -> str:
         names = await asyncio.to_thread(self.selector.select, text, self.registry) if self.selector else None
