@@ -162,3 +162,33 @@ Format:
   Fixing both makes the implementation and tests mutually consistent without weakening any assertion.
 - Alternatives rejected: implementing a second ` thinking`-tag stripping path (the model is told `think:false`; the plan's
   single ` thinking…response` format is the documented contract), weakening the streaming fidelity assertion (wrong).
+
+## D-015 — Owner's checker fixed the push rule and repaired an unreviewed offline edit (supersedes D-013)
+- Date: 2026-09-15
+- Task: P2-T6 (made by the owner's checker, not by OpenCode)
+- Decision: (a) `opencode.json` now denies only the exact branch `Test` (`git push origin Test`, `git push origin Test *`,
+  `*:Test` refspecs, `git checkout/switch Test`) instead of `Test*`, and adds denies for pushes to `main` or `Test` through
+  refspecs, `--delete`, `--mirror` and `+` force refspecs. `git push origin testing` is allowed again: push the unpushed P1
+  and P2 commits at the next phase end as AGENTS.md requires, and include `opencode.json` in your next commit.
+  (b) `assistant/brain/llm.py`: an offline local-model session on 15 Sep 08:27 left a syntax error (the `chat` signature lost
+  its colon and a broken `async def stream(...)::` header was inserted). Only those lines were repaired; the P2-T6 deletions
+  of `LocalLLM` and `import requests` were kept. `py_compile` passes and `tests/unit` passes (116 tests).
+- Reason: OpenCode's matcher (checked in the 1.18.30 binary) is case-insensitive and treats a trailing ` *` as optional, and
+  the last matching rule wins, so `Test*` blocked `testing`. The offline edit was never reviewed because a failed cloud
+  session was wrongly counted as a completed review; `opencode-autopilot` now counts only a clean exit.
+- Alternatives rejected: reverting all of `llm.py` (would lose correct P2-T6 work); leaving the syntax error for the next
+  session (every test run would fail until then).
+
+## D-016 — A stalled cloud model is replaced, not only a retired one
+- Date: 2026-09-15
+- Task: planning (setup repair by the owner's checker)
+- Decision: `opencode-doctor` now probes all preferred models in parallel and switches when the current model is retired or
+  does not answer within 150 s, choosing the most preferred model that answers; it switches back when a more preferred model
+  answers within 45 s. `opencode-autopilot` asks the doctor for a new model after 3 failed cloud sessions in a row. On
+  15 Sep 13:06 it moved the global model from `deepseek-v4-flash-0731` to `nvidia/nvidia/nemotron-3-ultra-550b-a55b`.
+- Reason: Between 14 Sep 13:33 and 15 Sep 12:50, 66 of 77 sessions ended with OpenCode exit code 1 on
+  `ProviderHeaderTimeoutError`, and no task was committed. Probes on 15 Sep: `deepseek-v4-flash-0731` and `kimi-k3` gave no
+  answer in 150–300 s; `deepseek-v4-pro-0813`, `llama-3.3-nemotron-super-49b-v1.5` and `mistral-large-3-675b-instruct-2512`
+  return HTTP 410 (removed from the preference list); `nemotron-3-ultra` answered in 91–142 s and `opencode/big-pickle` in 4–11 s.
+- Alternatives rejected: keeping a model that is reachable but never answers (no progress); switching to the local model
+  (weaker code, D-010).

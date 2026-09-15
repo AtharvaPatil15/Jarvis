@@ -214,11 +214,13 @@ function Invoke-Session([string]$Model, [string]$SessionPrompt, [int]$Index) {
         }
     }
     Write-Status "session ${Index}: OpenCode exited with code $($proc.ExitCode)"
-    return 'exited'
+    if ($proc.ExitCode -eq 0) { return 'exited' }
+    return 'failed'
 }
 
 Invoke-Doctor
 $preferLocalUntil = Get-Date
+$cloudFailures = 0
 for ($session = 1; $session -le $MaxSessions; $session++) {
     if (Test-PlanFinished) { Write-Status 'every task is DONE or BLOCKED, autopilot finished'; exit 0 }
     $cloud = Get-CloudModel
@@ -240,10 +242,16 @@ for ($session = 1; $session -le $MaxSessions; $session++) {
             Remove-Item $offlineBaseFile -Force
             Write-Status 'offline drafts reviewed by the cloud model'
         }
+        if ($result -eq 'exited') { $cloudFailures = 0 } elseif ($result -ne 'dry-run') { $cloudFailures++ }
         if ($result -eq 'provider-errors') {
             $preferLocalUntil = (Get-Date).AddMinutes($LocalCooldownMinutes)
             Write-Status "cloud model unhealthy, preferring the local model for $LocalCooldownMinutes minutes"
             Invoke-Doctor -Live
+            $cloudFailures = 0
+        } elseif ($cloudFailures -ge 3) {
+            Write-Status "$cloudFailures cloud sessions in a row ended with an error; asking the doctor for a model that answers"
+            Invoke-Doctor -Live
+            $cloudFailures = 0
         }
     } elseif ($localOk -and $OfflineMode -eq 'review') {
         if (-not (Test-Path $offlineBaseFile) -and -not $DryRun) {
