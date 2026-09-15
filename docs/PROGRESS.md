@@ -23,7 +23,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P3-T3 | `SpeechSegmenter` (Silero VAD) | DONE | 2026-09-16 | `docs/proof/P3-T3.md` | Silero VAD (pysilero-vad 3.4.0) segments real Kokoro speech at pauses, silence+noise ignored; 5 unit + 3 models pass; finished by Claude Code |
 | P3-T4 | `WakeWordDetector` (openWakeWord) | DONE | 2026-09-16 | `docs/proof/P3-T4.md` | Keyless `hey_jarvis` (openwakeword 0.6.0); 4/4 voices trigger (0.996–0.999), no trigger on silence/noise/speech at 0.5; 3 unit + 3 models pass; finished by Claude Code |
 | P3-T5 | Audio IO, `EchoGuard`, `VoiceController` + barge-in | DONE | 2026-09-16 | `docs/proof/P3-T5.md` | Sources/sinks, echo guard, hands-free controller with streaming speech + barge-in; sentence-order bug in plan code fixed (D-020); 5+4+6 pass, controller 5/5 runs; finished by Claude Code |
-| P3-T6 | Voice into server, remove old stack, latency proof | TODO | | | |
+| P3-T6 | Voice into server, remove old stack, latency proof | DONE | 2026-09-16 | `docs/proof/P3-T6.md` | Local voice pipeline in server (health voice:true), legacy Porcupine/Google/edge-tts/pygame removed; pipeline model test pass; median first audio 0.32 s (cuda); finished by Claude Code |
 | P4-T1 | `MemoryDB` + `redact` + turn logging | TODO | | | |
 | P4-T2 | `MemoryManager` remember/search/forget + prompt injection | TODO | | | |
 | P4-T3 | Fact extraction + memory tools | TODO | | | |

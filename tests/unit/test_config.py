@@ -15,7 +15,6 @@ def test_defaults_match_plan() -> None:
     assert s.whisper_model == "small.en"
     assert s.wake_model == "hey_jarvis"
     assert Path.home() / "Documents" in s.file_roots
-    assert s.porcupine_access_key == ""
 
 
 def test_env_prefix_overrides(monkeypatch) -> None:

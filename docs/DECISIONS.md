@@ -237,3 +237,28 @@ Format:
   exactly that order, and `['Sure.', 'Done.', None]` when all puts share `call_soon_threadsafe`. The tests were not changed.
 - Alternatives rejected: calling `put_nowait` in `on_delta` when already on the loop thread (two code paths; the real LLM
   stream may call `on_delta` from a worker thread); changing the test timings (forbidden by the plan).
+
+## D-021 — Tests removed with the legacy voice stack in P3-T6
+- Date: 2026-09-16
+- Task: P3-T6
+- Decision: Deleted `tests/unit/test_legacy_voice.py`; `test_mark_voice_idle_tolerates_missing_manager_and_resets_flag` and
+  `test_voice_failure_at_startup_does_not_crash_server` from `tests/unit/test_server_app.py`;
+  `test_legacy_wake_engine_without_key_fails_clearly` from `tests/unit/test_legacy_fixes.py`; and the
+  `porcupine_access_key` assertion from `tests/unit/test_config.py`.
+- Reason: The code they covered was deleted by this task as the plan requires (`VoiceController`/`ConversationManager` of
+  the old stack, `server.mark_voice_idle`, `assistant/voice/wake_word.py`, `Settings.porcupine_access_key`). Start-up
+  failure handling is now covered by `tests/unit/test_server_voice.py::test_voice_pipeline_failure_keeps_text_mode_working`.
+  They were not removed to make a run pass. `test_no_porcupine_key_in_any_tracked_file` stays.
+- Alternatives rejected: keeping tests for deleted modules (they could only fail).
+
+## D-022 — P3-T6 legacy grep uses whole-word matching
+- Date: 2026-09-16
+- Task: P3-T6
+- Decision: The "prove the legacy stack is gone" check is run with `git grep -nwE` (whole words) instead of `git grep -nE`.
+- Reason: The plan's substring grep cannot print nothing, because the plan itself requires two names that contain the search
+  terms: the new factory `build_voice_controller` (matched twice in `server.py`) and the kept security test
+  `test_no_porcupine_key_in_any_tracked_file`. With `-w` those identifiers no longer match while real legacy uses
+  (`import pvporcupine`, `assistant.voice.voice_controller`, `.conv_manager`, `recognize_google`, `edge_tts`, `pygame`) still
+  would; the whole-word run printed nothing. Both runs are in `docs/proof/P3-T6.md`.
+- Alternatives rejected: renaming `build_voice_controller` (a PLAN interface used by later tasks); renaming or deleting the
+  key-leak test (it guards against the leaked Porcupine key returning).

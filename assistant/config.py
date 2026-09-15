@@ -52,8 +52,6 @@ class Settings(BaseSettings):
     file_roots: list[Path] = Field(default_factory=_default_file_roots)
     mcp_config_path: Path = Path("mcp_servers.json")
 
-    porcupine_access_key: str = ""  # legacy wake word only; removed in P3-T6
-
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

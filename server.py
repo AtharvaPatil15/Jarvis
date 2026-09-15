@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -19,12 +21,6 @@ from assistant.safety.permissions import WebSocketPermissionGate
 log = logging.getLogger("jarvis.server")
 
 
-def mark_voice_idle(voice: Any) -> None:
-    manager = getattr(voice, "conv_manager", None)
-    if manager is not None:
-        manager.is_processing = False
-
-
 def _valid_permission_payload(payload: Any) -> bool:
     return isinstance(payload, dict) and isinstance(payload.get("id"), str) and isinstance(payload.get("allowed"), bool)
 
@@ -36,25 +32,33 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
     hub = ConnectionHub()
     gate = WebSocketPermissionGate(hub.emit, timeout_s=settings.permission_timeout_s)
     runtime = build_runtime(settings, hub.emit, gate, llm=llm)
+    lock = asyncio.Lock()
+    voice_stop = asyncio.Event()
+
+    async def voice_handler(text: str, on_delta: Callable[[str], None]) -> str:
+        async with lock:
+            return await runtime.orchestrator.handle(text, on_delta=on_delta)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         hub.bind_loop(asyncio.get_running_loop())
+        voice_task: asyncio.Task[None] | None = None
         if voice_wanted:
             try:
-                from assistant.voice.voice_controller import VoiceController
+                from assistant.voice.factory import build_voice_controller
 
-                voice = VoiceController(on_event=on_voice_event)
-                voice.start()
-                app.state.voice = voice
+                app.state.voice = await asyncio.to_thread(build_voice_controller, settings, voice_handler, hub.emit)
+                voice_task = asyncio.create_task(app.state.voice.run(voice_stop))
             except Exception:
-                log.exception("voice disabled: voice controller failed to start")
+                log.exception("voice disabled: voice pipeline failed to start")
                 app.state.voice = None
         try:
             yield
         finally:
-            if app.state.voice is not None:
-                app.state.voice.stop()
+            voice_stop.set()
+            if voice_task is not None:
+                with contextlib.suppress(asyncio.TimeoutError, asyncio.CancelledError):
+                    await asyncio.wait_for(voice_task, timeout=3)
             await hub.close()
 
     app = FastAPI(title="JARVIS", lifespan=lifespan)
@@ -71,7 +75,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
     app.state.orchestrator = runtime.orchestrator
     app.state.gate = gate
     app.state.voice = None
-    lock = asyncio.Lock()
+    app.state.voice_handler = voice_handler
 
     async def process_text(text: str) -> str:
         text = text.strip()
@@ -88,20 +92,11 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
                 return ""
             voice = app.state.voice
             if voice is not None:
-                await asyncio.to_thread(voice.speak, reply)
-                mark_voice_idle(voice)
+                await voice.speak(reply)
             hub.emit(EventType.STATE_CHANGE, AssistantState.IDLE)
             return reply
 
     app.state.process_text = process_text
-
-    def on_voice_event(event_type: str, data: Any) -> None:
-        if event_type in ("process_command", "merge_command"):
-            asyncio.run_coroutine_threadsafe(app.state.process_text(str(data)), hub.loop)
-            return
-        hub.emit(event_type, data)
-        if event_type == EventType.WAKE_WORD_DETECTED:
-            hub.emit(EventType.STATE_CHANGE, AssistantState.LISTENING)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

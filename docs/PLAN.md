@@ -170,7 +170,6 @@ class Settings(BaseSettings):  # env_prefix="JARVIS_", env_file=".env", extra="i
     permission_timeout_s: float = 30.0
     file_roots: list[Path] = [Path.home() / "Documents", Path.home() / "Desktop", Path.home() / "Downloads"]
     mcp_config_path: Path = Path("mcp_servers.json")
-    porcupine_access_key: str = ""   # legacy wake word only; removed in P3-T6
 def get_settings() -> Settings: ...   # functools.lru_cache
 ```
 
