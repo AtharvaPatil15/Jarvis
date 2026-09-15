@@ -42,6 +42,7 @@ class Orchestrator:
             return ""
         self._emit(EventType.STATE_CHANGE, AssistantState.THINKING)
         self.session.add_user(text)
+        await self._log("user", text)
         responding = {"on": False}
 
         def forward(chunk: str) -> None:
@@ -61,8 +62,17 @@ class Orchestrator:
             self.session.add_assistant(reply)
         if not responding["on"]:
             self._emit(EventType.STATE_CHANGE, AssistantState.RESPONDING)
+        await self._log("assistant", reply)
         self._emit(EventType.AI_RESPONSE, reply)
         return reply
+
+    async def _log(self, role: str, content: str) -> None:
+        if self.memory is None:
+            return
+        try:
+            await asyncio.to_thread(self.memory.log_turn, self.session_id, role, content)
+        except Exception:
+            log.exception("could not log %s turn", role)
 
     async def _run(self, text: str, forward: Callable[[str], None], responding: dict[str, bool]) -> str:
         names = await asyncio.to_thread(self.selector.select, text, self.registry) if self.selector else None

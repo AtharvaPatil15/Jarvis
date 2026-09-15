@@ -262,3 +262,14 @@ Format:
   would; the whole-word run printed nothing. Both runs are in `docs/proof/P3-T6.md`.
 - Alternatives rejected: renaming `build_voice_controller` (a PLAN interface used by later tasks); renaming or deleting the
   key-leak test (it guards against the leaked Porcupine key returning).
+
+## D-023 — P4-T1 importer check excludes the files being deleted
+- Date: 2026-09-16
+- Task: P4-T1
+- Decision: The "no importers" check before `git rm` of the legacy memory modules was run with pathspecs excluding
+  `assistant/memory/store.py`, `cache.py`, `contacts.py` and `user_profile.py`.
+- Reason: The plan's grep also matches the class definitions inside those four files (`class MemoryStore`, `class KnowledgeCache`,
+  `class ContactBook`, `class UserProfile`), so it can never print nothing before they are deleted. The plan's purpose is
+  "after `git grep` shows no importers"; with the four files excluded the grep printed nothing. Both runs are in
+  `docs/proof/P4-T1.md`.
+- Alternatives rejected: deleting first and grepping afterwards (would not prove there were no importers beforehand).

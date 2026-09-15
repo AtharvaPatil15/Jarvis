@@ -24,7 +24,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P3-T4 | `WakeWordDetector` (openWakeWord) | DONE | 2026-09-16 | `docs/proof/P3-T4.md` | Keyless `hey_jarvis` (openwakeword 0.6.0); 4/4 voices trigger (0.996–0.999), no trigger on silence/noise/speech at 0.5; 3 unit + 3 models pass; finished by Claude Code |
 | P3-T5 | Audio IO, `EchoGuard`, `VoiceController` + barge-in | DONE | 2026-09-16 | `docs/proof/P3-T5.md` | Sources/sinks, echo guard, hands-free controller with streaming speech + barge-in; sentence-order bug in plan code fixed (D-020); 5+4+6 pass, controller 5/5 runs; finished by Claude Code |
 | P3-T6 | Voice into server, remove old stack, latency proof | DONE | 2026-09-16 | `docs/proof/P3-T6.md` | Local voice pipeline in server (health voice:true), legacy Porcupine/Google/edge-tts/pygame removed; pipeline model test pass; median first audio 0.32 s (cuda); finished by Claude Code |
-| P4-T1 | `MemoryDB` + `redact` + turn logging | TODO | | | |
+| P4-T1 | `MemoryDB` + `redact` + turn logging | DONE | 2026-09-16 | `docs/proof/P4-T1.md` | SQLite messages/facts/reminders, redaction before write, every turn logged; legacy memory modules removed; 6 db + 11 redact + 2 logging pass; tests isolated from ./data; finished by Claude Code |
 | P4-T2 | `MemoryManager` remember/search/forget + prompt injection | TODO | | | |
 | P4-T3 | Fact extraction + memory tools | TODO | | | |
 | P4-T4 | Restart-persistence live proof | TODO | | | |
@@ -51,3 +51,4 @@ _None yet. For each BLOCKED task record: the exact error output, the three attem
 |---|---|---|---|
 | 2026-09-16 | P2-T6 (end of phase 2; first successful push since P0-T4, see D-013/D-015) | `59af2e84ec41558c2e42310712df1544e2ca214d` | yes |
 | 2026-09-16 | P3-T4 (end of phase 3a: P3-T1..P3-T4; full gate `verify-20260916-011339.log`) | `7830c5e0738fb1ae88248b632dc8a849ca668dc1` | yes |
+| 2026-09-16 | P3-T6 (end of phase 3; full gate `verify-20260916-012709.log`) | `572ccfb80686b4d2a88f0fe3a74206d7617a5812` | yes |

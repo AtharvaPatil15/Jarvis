@@ -11,6 +11,8 @@ from assistant.brain.prompts import build_system_prompt
 from assistant.brain.session import Session
 from assistant.config import Settings
 from assistant.events import Emit
+from assistant.memory.db import MemoryDB
+from assistant.memory.manager import MemoryManager
 from assistant.orchestrator import Orchestrator
 from assistant.safety.permissions import PermissionGate
 from assistant.tools.builtin import build_default_registry
@@ -24,6 +26,8 @@ class Runtime:
     registry: ToolRegistry
     session: Session
     orchestrator: Orchestrator
+    db: MemoryDB
+    memory: MemoryManager
 
 
 def build_llm(settings: Settings) -> Any:
@@ -37,8 +41,11 @@ def build_llm(settings: Settings) -> Any:
 
 def build_runtime(settings: Settings, emit: Emit, gate: PermissionGate, llm: Any | None = None) -> Runtime:
     llm = llm if llm is not None else build_llm(settings)
-    registry = build_default_registry(settings)
+    db = MemoryDB(settings.data_dir / "jarvis.db")
+    memory = MemoryManager(db, llm)
+    registry = build_default_registry(settings, memory=memory)
     zone = ZoneInfo(settings.timezone)
     session = Session(lambda: build_system_prompt(settings, datetime.now(zone)), max_chars=settings.history_max_chars)
-    orchestrator = Orchestrator(llm, registry, session, gate, emit, max_steps=settings.max_agent_steps)
-    return Runtime(settings=settings, llm=llm, registry=registry, session=session, orchestrator=orchestrator)
+    orchestrator = Orchestrator(llm, registry, session, gate, emit, memory=memory, max_steps=settings.max_agent_steps)
+    return Runtime(settings=settings, llm=llm, registry=registry, session=session, orchestrator=orchestrator,
+                   db=db, memory=memory)
