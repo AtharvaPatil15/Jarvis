@@ -8,6 +8,8 @@ $pidFile = 'docs/proof/tmp/backend.pid'
 if ($Stop) {
     if (Test-Path $pidFile) {
         $procId = [int](Get-Content $pidFile)
+        # The venv python.exe is a launcher that starts the real interpreter as a child, so stop the whole tree.
+        taskkill /PID $procId /T /F 2>$null | Out-Null
         Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
         Remove-Item $pidFile
         Write-Output "backend stopped (pid $procId)"

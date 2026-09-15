@@ -94,10 +94,10 @@ Open [http://localhost:3000](http://localhost:3000) to see the UI.
 # Activate virtual environment
 .venv\Scripts\activate
 
-# Run voice mode
-python voice_main.py
+# Run backend server (voice + text over WebSocket)
+python -m uvicorn server:create_app --factory --host 127.0.0.1 --port 8000
 
-# Run CLI mode
+# Run CLI mode (text)
 python main.py
 ```
 
@@ -138,7 +138,7 @@ jarvis-assistant/
 │   ├── voice/           # Voice components
 │   └── ui/              # PyQt6 UI (legacy)
 ├── main.py              # CLI entry point
-└── voice_main.py        # Voice entry point
+└── server.py            # Backend server entry point
 ```
 
 ## Development

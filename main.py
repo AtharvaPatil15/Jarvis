@@ -1,22 +1,33 @@
-# main.py
-from assistant.legacy_orchestrator import Orchestrator
-from assistant.ui.cli import CLI
+"""Text chat with JARVIS in the terminal: .venv/Scripts/python.exe main.py"""
+from __future__ import annotations
 
-def main():
-    print("🟢 Local Assistant started (Phase 1)")
-    print("Type 'exit' to quit.\n")
+import asyncio
+from collections.abc import Callable
 
-    orchestrator = Orchestrator()
-    ui = CLI()
+from assistant.config import get_settings
+from assistant.runtime import build_runtime
 
+
+class ConsolePermissionGate:
+    async def request(self, tool_name: str, summary: str) -> bool:
+        answer = await asyncio.to_thread(input, f"Allow {summary}? [y/N] ")
+        return answer.strip().lower() in ("y", "yes")
+
+
+async def repl(read: Callable[[str], str] = input, write: Callable[[str], None] = print) -> None:
+    runtime = build_runtime(get_settings(), emit=lambda type_, payload: None, gate=ConsolePermissionGate())
+    write("JARVIS text mode. Type 'exit' to quit.")
     while True:
-        user_input = ui.get_input()
-        if user_input.lower() in ("exit", "quit"):
-            print("👋 Goodbye.")
+        try:
+            line = await asyncio.to_thread(read, "you> ")
+        except EOFError:
             break
+        if line.strip().lower() in ("exit", "quit"):
+            break
+        reply = await runtime.orchestrator.handle(line)
+        if reply:
+            write(f"jarvis> {reply}")
 
-        response = orchestrator.handle_input(user_input)
-        ui.show_output(response)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(repl())

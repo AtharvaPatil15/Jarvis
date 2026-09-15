@@ -24,10 +24,6 @@ def test_on_delta_chunks_join_to_the_content() -> None:
     assert "".join(chunks) == result.content
 
 
-def test_legacy_generate_extracts_the_user_line() -> None:
-    assert FakeLLM().generate("SYSTEM CONTEXT\n\nUser: what's up\nJarvis:") == "You said: what's up"
-
-
 def test_embeddings_are_deterministic_normalised_and_similarity_aware() -> None:
     llm = FakeLLM()
     a, b, c = (np.array(v) for v in llm.embed(["my favourite colour is teal", "favourite colour teal", "weather in Pune"]))

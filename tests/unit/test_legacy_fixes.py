@@ -11,26 +11,6 @@ ROOT = Path(__file__).resolve().parents[2]
 KEY_PREFIX = "ycGaIQ" + "bL2ZWI8r2M"
 
 
-def _class_methods(path: Path, class_name: str) -> set[str]:
-    tree = ast.parse(path.read_text(encoding="utf-8"))
-    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == class_name)
-    return {n.name for n in cls.body if isinstance(n, ast.FunctionDef)}
-
-
-def test_voice_main_only_calls_methods_that_exist_on_speech_to_text() -> None:
-    tree = ast.parse((ROOT / "voice_main.py").read_text(encoding="utf-8"))
-    called = {
-        node.func.attr
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and isinstance(node.func.value, ast.Name)
-        and node.func.value.id == "stt"
-    }
-    assert called, "voice_main.py should call methods on its SpeechToText instance"
-    assert called <= _class_methods(ROOT / "assistant/voice/stt.py", "SpeechToText")
-
-
 def test_no_porcupine_key_in_any_tracked_file() -> None:
     tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
     offenders = [
@@ -40,9 +20,9 @@ def test_no_porcupine_key_in_any_tracked_file() -> None:
     assert offenders == []
 
 
-def test_smart_search_module_imports() -> None:
-    module = importlib.import_module("assistant.tools.smart_search")
-    assert module.SmartSearchTool.name == "smart_search"
+def test_web_search_tool_module_imports() -> None:
+    module = importlib.import_module("assistant.tools.builtin.web_search")
+    assert module.WebSearchTool.name == "web_search"
 
 
 def test_requirements_use_ddgs_package() -> None:

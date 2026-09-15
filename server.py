@@ -13,18 +13,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from assistant.config import Settings, get_settings
 from assistant.events import AssistantState, EventType
 from assistant.hub import ConnectionHub
+from assistant.runtime import build_runtime
+from assistant.safety.permissions import WebSocketPermissionGate
 
 log = logging.getLogger("jarvis.server")
-
-
-def build_llm(settings: Settings) -> Any:
-    if settings.llm_backend == "fake":
-        from assistant.brain.fake_llm import FakeLLM
-
-        return FakeLLM()
-    from assistant.brain.llm import LocalLLM
-
-    return LocalLLM(base_url=settings.ollama_url, model=settings.chat_model)
 
 
 def mark_voice_idle(voice: Any) -> None:
@@ -33,16 +25,17 @@ def mark_voice_idle(voice: Any) -> None:
         manager.is_processing = False
 
 
+def _valid_permission_payload(payload: Any) -> bool:
+    return isinstance(payload, dict) and isinstance(payload.get("id"), str) and isinstance(payload.get("allowed"), bool)
+
+
 def create_app(settings: Settings | None = None, *, llm: Any | None = None,
                enable_voice: bool | None = None) -> FastAPI:
     settings = settings or get_settings()
     voice_wanted = settings.voice_enabled if enable_voice is None else enable_voice
     hub = ConnectionHub()
-    llm = llm if llm is not None else build_llm(settings)
-
-    from assistant.legacy_orchestrator import Orchestrator
-
-    orchestrator = Orchestrator(llm=llm)
+    gate = WebSocketPermissionGate(hub.emit, timeout_s=settings.permission_timeout_s)
+    runtime = build_runtime(settings, hub.emit, gate, llm=llm)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -73,9 +66,11 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
     )
     app.state.hub = hub
     app.state.settings = settings
-    app.state.llm = llm
+    app.state.llm = runtime.llm
+    app.state.registry = runtime.registry
+    app.state.orchestrator = runtime.orchestrator
+    app.state.gate = gate
     app.state.voice = None
-
     lock = asyncio.Lock()
 
     async def process_text(text: str) -> str:
@@ -84,16 +79,13 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             return ""
         async with lock:
             hub.emit(EventType.USER_TRANSCRIPT, text)
-            hub.emit(EventType.STATE_CHANGE, AssistantState.THINKING)
             try:
-                reply = await asyncio.to_thread(orchestrator.handle_input, text)
+                reply = await runtime.orchestrator.handle(text)
             except Exception as exc:
                 log.exception("command failed")
                 hub.emit(EventType.ERROR, {"message": str(exc)})
                 hub.emit(EventType.STATE_CHANGE, AssistantState.IDLE)
                 return ""
-            hub.emit(EventType.STATE_CHANGE, AssistantState.RESPONDING)
-            hub.emit(EventType.AI_RESPONSE, reply)
             voice = app.state.voice
             if voice is not None:
                 await asyncio.to_thread(voice.speak, reply)
@@ -108,7 +100,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             asyncio.run_coroutine_threadsafe(app.state.process_text(str(data)), hub.loop)
             return
         hub.emit(event_type, data)
-        if event_type == "wake_word_detected":
+        if event_type == EventType.WAKE_WORD_DETECTED:
             hub.emit(EventType.STATE_CHANGE, AssistantState.LISTENING)
 
     @app.get("/health")
@@ -131,6 +123,11 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
                     continue
                 if kind == "user_text" and isinstance(payload, str):
                     asyncio.create_task(app.state.process_text(payload))
+                elif kind == "permission_response":
+                    if _valid_permission_payload(payload):
+                        gate.resolve(payload["id"], payload["allowed"])
+                    else:
+                        hub.emit(EventType.ERROR, {"message": "invalid permission_response payload"})
                 else:
                     hub.emit(EventType.ERROR, {"message": f"unsupported message type: {kind}"})
         except WebSocketDisconnect:

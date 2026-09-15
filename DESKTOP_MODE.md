@@ -199,11 +199,11 @@ tailwindcss
 ### Voice not working
 - Check microphone permissions
 - Verify correct microphone is selected
-- Test with `python voice_main.py` first
+- Test the backend separately first (start it with the uvicorn command in README.md)
 
 ## 📝 Development Tips
 
-1. **Test voice separately**: Use `python voice_main.py` to debug voice issues
+1. **Test voice separately**: Start the backend (uvicorn) and test over the WebSocket to debug voice issues
 2. **Test UI separately**: Use `npm run dev` and open browser to test UI
 3. **Monitor WebSocket**: Use browser DevTools → Network → WS tab
 4. **Check logs**: Backend logs appear in the "JARVIS Backend" terminal window

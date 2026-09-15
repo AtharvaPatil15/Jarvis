@@ -38,12 +38,6 @@ class FakeLLM:
                 on_delta(chunk)
         return result
 
-    def generate(self, prompt: str) -> str:
-        """Legacy LocalLLM-compatible API used by the old orchestrator. Removed in P2-T6."""
-        user_lines = [line for line in prompt.splitlines() if line.startswith("User:")]
-        text = user_lines[-1][len("User:"):].strip() if user_lines else prompt.strip()
-        return f"You said: {text}"
-
     def embed(self, texts: list[str]) -> list[list[float]]:
         vectors: list[list[float]] = []
         for text in texts:

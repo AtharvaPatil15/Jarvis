@@ -192,3 +192,25 @@ Format:
   return HTTP 410 (removed from the preference list); `nemotron-3-ultra` answered in 91–142 s and `opencode/big-pickle` in 4–11 s.
 - Alternatives rejected: keeping a model that is reachable but never answers (no progress); switching to the local model
   (weaker code, D-010).
+
+## D-017 — Tests removed with the legacy brain in P2-T6
+- Date: 2026-09-15
+- Task: P2-T6
+- Decision: Removed `test_legacy_generate_extracts_the_user_line` (`tests/unit/test_fake_llm.py`), and `_class_methods` plus
+  `test_voice_main_only_calls_methods_that_exist_on_speech_to_text` (`tests/unit/test_legacy_fixes.py`); replaced
+  `test_smart_search_module_imports` with `test_web_search_tool_module_imports`. `requests` stays in `requirements.txt`.
+- Reason: The code these tests covered was deleted by this task as the plan requires (`FakeLLM.generate`, `voice_main.py`,
+  `assistant/tools/smart_search.py`); they were not removed to make a run pass. `git grep -n "import requests"` still finds
+  `install_ui_deps.py`, so the plan's condition for removing `requests` is not met.
+- Alternatives rejected: keeping tests for deleted modules (they could only fail); removing `requests` (breaks
+  `install_ui_deps.py`).
+
+## D-018 — `backend.ps1 -Stop` stops the whole process tree
+- Date: 2026-09-15
+- Task: P2-T6 (fixes a P1-T1 script)
+- Decision: `scripts/backend.ps1 -Stop` now runs `taskkill /PID <pid> /T /F` on the saved PID before `Stop-Process`.
+- Reason: `.venv/Scripts/python.exe` is a launcher that starts `C:\Python312\python.exe` as a child. The saved PID is the
+  launcher, so `Stop-Process -Id` alone left the real uvicorn server running on port 8000 (orphans seen on 15 Sep at 13:23 and
+  22:44, each a launcher + child pair). Evidence for the fix is in `docs/proof/P2-T6.md` (Step 8).
+- Alternatives rejected: saving the child PID (the launcher is what `Start-Process` returns, and its child appears only later);
+  stopping processes by name (forbidden by AGENTS.md).
