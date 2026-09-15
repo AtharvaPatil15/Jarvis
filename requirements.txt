@@ -16,6 +16,7 @@ soundfile
 scipy
 faster-whisper
 jiwer
+pysilero-vad
 
 # Legacy voice stack - removed in P3-T6
 pvporcupine
