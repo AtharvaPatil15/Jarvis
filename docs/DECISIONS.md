@@ -214,3 +214,13 @@ Format:
   22:44, each a launcher + child pair). Evidence for the fix is in `docs/proof/P2-T6.md` (Step 8).
 - Alternatives rejected: saving the child PID (the launcher is what `Start-Process` returns, and its child appears only later);
   stopping processes by name (forbidden by AGENTS.md).
+
+## D-019 — Ignore only the root `models/` folder
+- Date: 2026-09-16
+- Task: P3-T1
+- Decision: `.gitignore` line `models/` became `/models/`.
+- Reason: An unanchored `models/` also matches `tests/models/`, so `git check-ignore -v tests/models/conftest.py` reported
+  `.gitignore:90:models/` and the plan's `git add tests/models` would have silently skipped the model-backed tests. The
+  forbidden path in AGENTS.md and `verify_all.ps1` is `^models/` (the root download folder), which stays ignored.
+- Alternatives rejected: `git add -f tests/models` (every later task adding a model test would hit the same trap); renaming
+  the test folder (the plan and later tasks use `tests/models`).

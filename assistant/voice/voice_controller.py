@@ -2,9 +2,9 @@ import threading
 import time
 
 from .conversation_manager import ConversationManager
-from .stt import SpeechToText
+from .legacy_stt import SpeechToText
 from .wake_word import WakeWordEngine
-from .tts import TextToSpeech
+from .legacy_tts import TextToSpeech
 
 
 class VoiceController:

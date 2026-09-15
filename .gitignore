@@ -87,7 +87,7 @@ coverage/
 # --- Added in P0-T1 ---
 PROJECT_CONTEXT.md
 PROJECT_RAW_DUMP.md
-models/
+/models/
 data/
 *.onnx
 *.bin

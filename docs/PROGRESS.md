@@ -18,7 +18,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P2-T4 | Permission gates + `Orchestrator` agent loop | DONE | 2026-09-14 | `docs/proof/P2-T4.md` | Agent loop + permission gates; 18 new unit tests pass; gate ok |
 | P2-T5 | `web_search`, `fetch_page`, `get_weather` | DONE | 2026-09-14 | `docs/proof/P2-T5.md` | Web + weather tools registered; 17 unit + 3 live pass; gate ok |
 | P2-T6 | Orchestrator into server + live conversation proof | DONE | 2026-09-16 | `docs/proof/P2-T6.md` | Agent loop in server + CLI, legacy brain deleted; 116 unit + 4 live pass; transcript 391/782; backend -Stop tree fix (D-018); finished by Claude Code |
-| P3-T1 | Model downloader + `Synthesizer` + sentence splitting | TODO | | | |
+| P3-T1 | Model downloader + `Synthesizer` + sentence splitting | DONE | 2026-09-16 | `docs/proof/P3-T1.md` | Kokoro `bm_george` offline, sentence splitter/buffer, audio utils, downloader; 14 unit + 3 models pass; `/models/` ignore fix (D-019); finished by Claude Code |
 | P3-T2 | `Transcriber` + TTS→STT round trip | TODO | | | |
 | P3-T3 | `SpeechSegmenter` (Silero VAD) | TODO | | | |
 | P3-T4 | `WakeWordDetector` (openWakeWord) | TODO | | | |
@@ -49,3 +49,4 @@ _None yet. For each BLOCKED task record: the exact error output, the three attem
 
 | Date | After task | `git rev-parse HEAD` | `git ls-remote --heads origin testing` matches |
 |---|---|---|---|
+| 2026-09-16 | P2-T6 (end of phase 2; first successful push since P0-T4, see D-013/D-015) | `59af2e84ec41558c2e42310712df1544e2ca214d` | yes |

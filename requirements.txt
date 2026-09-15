@@ -11,6 +11,9 @@ ddgs
 numpy>=2.0
 sounddevice>=0.5
 tzdata
+kokoro-onnx
+soundfile
+scipy
 
 # Legacy voice stack - removed in P3-T6
 pvporcupine
