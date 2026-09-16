@@ -3,11 +3,13 @@
 import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
-import JarvisCoreEngine from '@/components/jarvis/JarvisCoreEngine'; // ✅ Removed { DebugControls }
+import JarvisCoreEngine from '@/components/jarvis/JarvisCoreEngine';
 import { HolographicHUD } from '@/components/jarvis/hud/HolographicHUD';
 import { AssistantText } from '@/components/overlay/AssistantText';
 import { ToolIndicator } from '@/components/overlay/ToolIndicator';
-import { useSocket } from '@/hooks/useSocket';
+import { CommandInput } from '@/components/overlay/CommandInput';
+import { PermissionPrompt } from '@/components/overlay/PermissionPrompt';
+import { getJarvisSocket, useSocket } from '@/hooks/useSocket';
 
 function SceneContent() {
   return (
@@ -48,8 +50,9 @@ export default function Home() {
         <HolographicHUD />
         <AssistantText />
         <ToolIndicator />
-        {/* ✅ DebugControls Removed */}
-        
+        <PermissionPrompt onRespond={(id, allowed) => getJarvisSocket()?.respondToPermission(id, allowed)} />
+        <CommandInput onSend={(text) => getJarvisSocket()?.sendUserText(text) ?? false} />
+
         <div className="absolute top-8 left-8 z-10 pointer-events-none">
             <h1 className="text-white font-bold text-xl tracking-[0.3em]">
               JARVIS<span style={{ color: '#ffb000' }}>.UI</span>
