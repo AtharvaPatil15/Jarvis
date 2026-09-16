@@ -33,7 +33,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P5-T3 | `read_screen` (OCR) | DONE | 2026-09-16 | `docs/proof/P5-T3.md` | Local RapidOCR reads the primary screen, permission-gated, untrusted header, 3000-char cap; 4 unit + 2 models pass; finished by Claude Code |
 | P5-T4 | Reminders + scheduler | DONE | 2026-09-16 | `docs/proof/P5-T4.md` | Scheduler with background thread, reminder tools, UI events, voice speak; 7 tests pass |
 | P5-T5 | `MCPBridge` (filesystem server proof) | DONE | 2026-09-16 | `docs/proof/P5-T5.md` | MCPBridge with echo + filesystem servers; 5 unit + 3 e2e pass; one failing server never blocks others |
-| P5-T6 | `ToolSelector` + dead-code removal | TODO | | | |
+| P5-T6 | `ToolSelector` + dead-code removal | DONE | 2026-09-16 | `docs/proof/P5-T6.md` | Embedding-based tool selection (k=12), fallback on failure, FakeLLM dim 256; dead code removed (ai-core, ui, install_ui_deps); 4 new unit tests + 223 existing pass; gate ok; UI build ok |
 | P6-T1 | `lib/jarvisSocket.ts` + store + streaming UI | TODO | | | |
 | P6-T2 | `CommandInput` + `PermissionPrompt` | TODO | | | |
 | P6-T3 | Playwright end-to-end with screenshots | TODO | | | |

@@ -18,6 +18,7 @@ from assistant.safety.permissions import PermissionGate
 from assistant.scheduler import ReminderScheduler
 from assistant.tools.builtin import build_default_registry
 from assistant.tools.registry import ToolRegistry
+from assistant.tools.selector import ToolSelector
 
 
 @dataclass
@@ -61,7 +62,8 @@ def build_runtime(settings: Settings, emit: Emit, gate: PermissionGate, llm: Any
     box: dict[str, Orchestrator] = {}
     session = Session(lambda: build_system_prompt(settings, datetime.now(zone), box["orchestrator"].current_memories),
                       max_chars=settings.history_max_chars)
-    orchestrator = Orchestrator(llm, registry, session, gate, emit, memory=memory, max_steps=settings.max_agent_steps)
+    selector = ToolSelector(llm)
+    orchestrator = Orchestrator(llm, registry, session, gate, emit, memory=memory, selector=selector, max_steps=settings.max_agent_steps)
     box["orchestrator"] = orchestrator
     return Runtime(settings=settings, llm=llm, registry=registry, session=session, orchestrator=orchestrator,
                    db=db, memory=memory, scheduler=scheduler, reminder_listeners=listeners)

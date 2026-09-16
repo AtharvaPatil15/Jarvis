@@ -13,7 +13,7 @@ from assistant.brain.llm import ChatResult
 
 
 class FakeLLM:
-    def __init__(self, script: Sequence[ChatResult] = (), healthy: bool = True, dim: int = 64) -> None:
+    def __init__(self, script: Sequence[ChatResult] = (), healthy: bool = True, dim: int = 256) -> None:
         self.script: list[ChatResult] = list(script)
         self.calls: list[dict[str, Any]] = []
         self.healthy = healthy

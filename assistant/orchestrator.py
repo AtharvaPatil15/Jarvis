@@ -104,7 +104,12 @@ class Orchestrator:
             await asyncio.gather(*list(self._background), return_exceptions=True)
 
     async def _run(self, text: str, forward: Callable[[str], None], responding: dict[str, bool]) -> str:
-        names = await asyncio.to_thread(self.selector.select, text, self.registry) if self.selector else None
+        names = None
+        if self.selector is not None:
+            try:
+                names = await asyncio.to_thread(self.selector.select, text, self.registry)
+            except Exception as exc:
+                log.warning("tool selection failed, sending all tools: %s", exc)
         schemas = self.registry.schemas(names) or None
         for _ in range(self.max_steps):
             result = await asyncio.to_thread(self.llm.chat, self.session.messages(), tools=schemas, on_delta=forward)
