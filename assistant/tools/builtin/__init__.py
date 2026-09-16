@@ -5,6 +5,7 @@ from typing import Any
 
 from assistant.config import Settings
 from assistant.tools.builtin.calculator import CalculateTool
+from assistant.tools.builtin.files import ReadFileTool, SearchFilesTool
 from assistant.tools.builtin.memory_tools import ForgetTool, RecallTool, RememberTool
 from assistant.tools.builtin.system import MediaControlTool, OpenAppTool, OpenUrlTool
 from assistant.tools.builtin.time_tool import GetTimeTool
@@ -20,6 +21,8 @@ def build_default_registry(settings: Settings, memory: Any | None = None, schedu
     registry.register(WebSearchTool())
     registry.register(FetchPageTool())
     registry.register(GetWeatherTool(settings.location_name, settings.latitude, settings.longitude))
+    registry.register(SearchFilesTool(settings.file_roots))
+    registry.register(ReadFileTool(settings.file_roots))
     registry.register(OpenAppTool())
     registry.register(OpenUrlTool())
     registry.register(MediaControlTool())

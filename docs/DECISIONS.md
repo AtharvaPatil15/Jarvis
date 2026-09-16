@@ -285,3 +285,15 @@ Format:
   exactly as the plan wrote it.
 - Alternatives rejected: deleting or skipping the test (forbidden by AGENTS.md); changing `OpenAppTool` (the implementation
   was not at fault).
+
+## D-025 — `read_file` normalises Windows line endings
+- Date: 2026-09-16
+- Task: P5-T2
+- Decision: `ReadFileTool.run` now decodes with `.replace("\r\n", "\n")`.
+- Reason: `test_read_file_inside_the_roots` failed with the plan's code: the test fixture writes the file with
+  `Path.write_text("# Notes\nJARVIS is working.")`, which Python stores as `\r\n` on Windows, while the tool reads raw bytes
+  (needed for the binary check) and returned `# Notes\r\nJARVIS is working.`. The pytest diff showed exactly one extra
+  character after "# Notes". Normalising in the tool is the right fix: the model should never see carriage returns, and the
+  behaviour is then the same on every platform. No assertion was changed.
+- Alternatives rejected: writing the fixture with `newline="\n"` (hides a real Windows behaviour from the tool); reading in
+  text mode (would break the binary-file detection).
