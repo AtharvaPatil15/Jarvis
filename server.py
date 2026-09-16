@@ -74,6 +74,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             await asyncio.to_thread(runtime.scheduler.stop)
             await asyncio.to_thread(bridge.stop)
             await hub.close()
+            await asyncio.to_thread(runtime.db.close)
 
     app = FastAPI(title="JARVIS", lifespan=lifespan)
     app.add_middleware(
