@@ -28,7 +28,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P4-T2 | `MemoryManager` remember/search/forget + prompt injection | DONE | 2026-09-16 | `docs/proof/P4-T2.md` | Embedded facts with near-duplicate skip, semantic search, forget; relevant facts injected into the system prompt, search failure never breaks a turn; 4 manager + 2 recall pass; finished by Claude Code |
 | P4-T3 | Fact extraction + memory tools | DONE | 2026-09-16 | `docs/proof/P4-T3.md` | Background fact extraction after each reply; remember/recall/forget tools (forget needs permission); 7 extraction + 2 tool unit + 3 live pass; finished by Claude Code |
 | P4-T4 | Restart-persistence live proof | DONE | 2026-09-16 | `docs/proof/P4-T4.md` | Live test remember→restart→recall→forget passes; two-process transcript recalls teal after a real restart (pid 29448 → 31000); finished by Claude Code |
-| P5-T1 | `open_app`, `open_url`, `media_control` | TODO | | | |
+| P5-T1 | `open_app`, `open_url`, `media_control` | DONE | 2026-09-16 | `docs/proof/P5-T1.md` | Start-menu shortcut resolution (uninstallers filtered), aliases, http/https-only URLs, media keys; 6 unit pass; test helper fix (D-024); finished by Claude Code |
 | P5-T2 | `search_files`, `read_file` | TODO | | | |
 | P5-T3 | `read_screen` (OCR) | TODO | | | |
 | P5-T4 | Reminders + scheduler | TODO | | | |
@@ -52,3 +52,4 @@ _None yet. For each BLOCKED task record: the exact error output, the three attem
 | 2026-09-16 | P2-T6 (end of phase 2; first successful push since P0-T4, see D-013/D-015) | `59af2e84ec41558c2e42310712df1544e2ca214d` | yes |
 | 2026-09-16 | P3-T4 (end of phase 3a: P3-T1..P3-T4; full gate `verify-20260916-011339.log`) | `7830c5e0738fb1ae88248b632dc8a849ca668dc1` | yes |
 | 2026-09-16 | P3-T6 (end of phase 3; full gate `verify-20260916-012709.log`) | `572ccfb80686b4d2a88f0fe3a74206d7617a5812` | yes |
+| 2026-09-16 | P4-T4 (end of phase 4; full gate `verify-20260916-094107.log`) | `2921f78701d00a0c589097e9694dfcedb9b5f41e` | yes |

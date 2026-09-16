@@ -273,3 +273,15 @@ Format:
   "after `git grep` shows no importers"; with the four files excluded the grep printed nothing. Both runs are in
   `docs/proof/P4-T1.md`.
 - Alternatives rejected: deleting first and grepping afterwards (would not prove there were no importers beforehand).
+
+## D-024 — P5-T1 test helper `shortcuts()` must be reusable
+- Date: 2026-09-16
+- Task: P5-T1
+- Decision: In `tests/unit/test_system_tools.py`, the helper now calls `mkdir(parents=True, exist_ok=True)`.
+- Reason: `test_unknown_app_and_launch_failure` calls `shortcuts(tmp_path)` twice in the same temp folder (once for the
+  unknown-app tool, once for the failing-launcher tool). With the plan's `mkdir(parents=True)` the second call raised
+  `FileExistsError: [WinError 183] ... \Programs\Google` before any assertion ran, so the test could never pass. Only the
+  directory creation changed; every assertion is unchanged, and the other five tests already passed with the implementation
+  exactly as the plan wrote it.
+- Alternatives rejected: deleting or skipping the test (forbidden by AGENTS.md); changing `OpenAppTool` (the implementation
+  was not at fault).
