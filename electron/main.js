@@ -30,7 +30,20 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadURL("http://localhost:3000");
+  mainWindow.loadURL("http://127.0.0.1:3000");
+  if (process.argv.includes("--smoke")) {
+    const timeout = setTimeout(() => app.exit(2), 60000);
+    mainWindow.webContents.once("did-finish-load", () => {
+      clearTimeout(timeout);
+      console.log("ELECTRON_SMOKE_OK");
+      app.exit(0);
+    });
+    mainWindow.webContents.once("did-fail-load", (_event, code, description) => {
+      clearTimeout(timeout);
+      console.error(`ELECTRON_SMOKE_FAILED ${code} ${description}`);
+      app.exit(1);
+    });
+  }
   mainWindow.setMenu(null);
   // mainWindow.webContents.openDevTools({ mode: 'detach' }); // Optional
 

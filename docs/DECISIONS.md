@@ -297,3 +297,19 @@ Format:
   behaviour is then the same on every platform. No assertion was changed.
 - Alternatives rejected: writing the fixture with `newline="\n"` (hides a real Windows behaviour from the tool); reading in
   text mode (would break the binary-file detection).
+
+## D-026 — Launcher test reads output through a file; `Wait-Http` prints with `Write-Host`
+- Date: 2026-09-16
+- Task: P6-T4
+- Decision: (1) `tests/e2e/test_launcher_e2e.py` runs the launcher with stdout/stderr sent to a temporary file instead of
+  `capture_output=True`. (2) `scripts/start_jarvis.ps1` `Wait-Http` reports progress with `Write-Host` instead of
+  `Write-Output`.
+- Reason: (1) the launcher starts uvicorn and `next start` with `Start-Process`, and those children inherit the launcher's
+  output handles. With a pipe, `subprocess.run` waits for end-of-file that never comes while the servers live, so the test
+  hung until the tool timeout in three autopilot sessions in a row (session-002..004, 25 minutes each), although the
+  launcher itself returns in about two seconds. A file handle has no end-of-file wait. (2) In PowerShell every
+  `Write-Output` inside a function becomes part of its return value, so `Wait-Http` returned `@("… not ready …", $false)`,
+  which is truthy: a backend that never came up was treated as ready, and the plan's expected `backend ready` / `ui ready`
+  lines never printed. Verified with `-TimeoutSec 0`, which now exits 1 and stops the backend.
+- Alternatives rejected: longer timeouts (the pipe never closes); `Start-Process -Wait` in the test (waits for the whole
+  process tree, so it also hangs).
