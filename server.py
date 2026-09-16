@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from assistant.config import Settings, get_settings
 from assistant.events import AssistantState, EventType
 from assistant.hub import ConnectionHub
+from assistant.mcp_bridge import MCPBridge
 from assistant.runtime import build_runtime
 from assistant.safety.permissions import WebSocketPermissionGate
 
@@ -57,6 +58,12 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             runtime.reminder_listeners.append(
                 lambda _id, text: asyncio.run_coroutine_threadsafe(voice.speak(f"Reminder: {text}"), hub.loop))
         runtime.scheduler.start()
+        bridge = MCPBridge(settings.mcp_config_path)
+        try:
+            for tool in await asyncio.to_thread(bridge.start):
+                runtime.registry.register(tool)
+        except Exception:
+            log.exception("MCP tools disabled")
         try:
             yield
         finally:
@@ -65,6 +72,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
                 with contextlib.suppress(asyncio.TimeoutError, asyncio.CancelledError):
                     await asyncio.wait_for(voice_task, timeout=3)
             await asyncio.to_thread(runtime.scheduler.stop)
+            await asyncio.to_thread(bridge.stop)
             await hub.close()
 
     app = FastAPI(title="JARVIS", lifespan=lifespan)
