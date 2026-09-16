@@ -7,6 +7,7 @@ from assistant.config import Settings
 from assistant.tools.builtin.calculator import CalculateTool
 from assistant.tools.builtin.files import ReadFileTool, SearchFilesTool
 from assistant.tools.builtin.memory_tools import ForgetTool, RecallTool, RememberTool
+from assistant.tools.builtin.reminders import ListRemindersTool, SetReminderTool
 from assistant.tools.builtin.screen import ReadScreenTool
 from assistant.tools.builtin.system import MediaControlTool, OpenAppTool, OpenUrlTool
 from assistant.tools.builtin.time_tool import GetTimeTool
@@ -32,4 +33,7 @@ def build_default_registry(settings: Settings, memory: Any | None = None, schedu
         registry.register(RememberTool(memory))
         registry.register(RecallTool(memory))
         registry.register(ForgetTool(memory))
+    if scheduler is not None:
+        registry.register(SetReminderTool(scheduler, settings.timezone))
+        registry.register(ListRemindersTool(scheduler, settings.timezone))
     return registry

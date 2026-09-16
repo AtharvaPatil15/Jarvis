@@ -16,17 +16,22 @@ class ConsolePermissionGate:
 
 async def repl(read: Callable[[str], str] = input, write: Callable[[str], None] = print) -> None:
     runtime = build_runtime(get_settings(), emit=lambda type_, payload: None, gate=ConsolePermissionGate())
-    write("JARVIS text mode. Type 'exit' to quit.")
-    while True:
-        try:
-            line = await asyncio.to_thread(read, "you> ")
-        except EOFError:
-            break
-        if line.strip().lower() in ("exit", "quit"):
-            break
-        reply = await runtime.orchestrator.handle(line)
-        if reply:
-            write(f"jarvis> {reply}")
+    runtime.reminder_listeners.append(lambda _id, text: write(f"jarvis> Reminder: {text}"))
+    runtime.scheduler.start()
+    try:
+        write("JARVIS text mode. Type 'exit' to quit.")
+        while True:
+            try:
+                line = await asyncio.to_thread(read, "you> ")
+            except EOFError:
+                break
+            if line.strip().lower() in ("exit", "quit"):
+                break
+            reply = await runtime.orchestrator.handle(line)
+            if reply:
+                write(f"jarvis> {reply}")
+    finally:
+        runtime.scheduler.stop()
 
 
 if __name__ == "__main__":

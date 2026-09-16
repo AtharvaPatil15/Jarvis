@@ -52,6 +52,11 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             except Exception:
                 log.exception("voice disabled: voice pipeline failed to start")
                 app.state.voice = None
+        if app.state.voice is not None:
+            voice = app.state.voice
+            runtime.reminder_listeners.append(
+                lambda _id, text: asyncio.run_coroutine_threadsafe(voice.speak(f"Reminder: {text}"), hub.loop))
+        runtime.scheduler.start()
         try:
             yield
         finally:
@@ -59,6 +64,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
             if voice_task is not None:
                 with contextlib.suppress(asyncio.TimeoutError, asyncio.CancelledError):
                     await asyncio.wait_for(voice_task, timeout=3)
+            await asyncio.to_thread(runtime.scheduler.stop)
             await hub.close()
 
     app = FastAPI(title="JARVIS", lifespan=lifespan)
@@ -76,6 +82,7 @@ def create_app(settings: Settings | None = None, *, llm: Any | None = None,
     app.state.gate = gate
     app.state.voice = None
     app.state.voice_handler = voice_handler
+    app.state.scheduler = runtime.scheduler
 
     async def process_text(text: str) -> str:
         text = text.strip()

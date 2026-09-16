@@ -31,7 +31,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P5-T1 | `open_app`, `open_url`, `media_control` | DONE | 2026-09-16 | `docs/proof/P5-T1.md` | Start-menu shortcut resolution (uninstallers filtered), aliases, http/https-only URLs, media keys; 6 unit pass; test helper fix (D-024); finished by Claude Code |
 | P5-T2 | `search_files`, `read_file` | DONE | 2026-09-16 | `docs/proof/P5-T2.md` | Name search inside Documents/Desktop/Downloads (excluded + hidden folders skipped), permission-gated text reading, traversal refused; 7 unit pass; newline fix (D-025); finished by Claude Code |
 | P5-T3 | `read_screen` (OCR) | DONE | 2026-09-16 | `docs/proof/P5-T3.md` | Local RapidOCR reads the primary screen, permission-gated, untrusted header, 3000-char cap; 4 unit + 2 models pass; finished by Claude Code |
-| P5-T4 | Reminders + scheduler | TODO | | | |
+| P5-T4 | Reminders + scheduler | DONE | 2026-09-16 | `docs/proof/P5-T4.md` | Scheduler with background thread, reminder tools, UI events, voice speak; 7 tests pass |
 | P5-T5 | `MCPBridge` (filesystem server proof) | TODO | | | |
 | P5-T6 | `ToolSelector` + dead-code removal | TODO | | | |
 | P6-T1 | `lib/jarvisSocket.ts` + store + streaming UI | TODO | | | |
