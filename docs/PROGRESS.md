@@ -39,7 +39,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P6-T3 | Playwright end-to-end with screenshots | DONE | 2026-09-16 | `docs/proof/P6-T3.md` | 3 browser tests pass (typed command, permission allow/deny), screenshots captured; FakeLLM /tool hook; gate ok |
 | P6-T4 | `start_jarvis.ps1` launcher | DONE | 2026-09-16 | `docs/proof/P6-T4.md` | One-command start/stop (real launch llm+voice true), Electron smoke loads UI; 2 e2e pass; launcher-test pipe hang and truthy `Wait-Http` fixed (D-026); finished by Claude Code |
 | P6-T5 | Eval suite ≥ 85 % | DONE | 2026-09-16 | `docs/proof/P6-T5.md` | 28/28 pass (100%); injection guard OK; report committed |
-| P6-T6 | Cleanup, README, final verification, push | TODO | | | |
+| P6-T6 | Cleanup, README, final verification, push | DONE | 2026-09-16 | `docs/proof/P6-T6.md` | README/SECURITY/CONTRIBUTING/.env.example checked against code and corrected; legacy docs removed; `docs/FINAL_REPORT.md`: full gate, evals 28/28, latency 1.50 s, WER ≤ 0.111, persistence, launcher all pass; finished by Claude Code |
 
 ## Blocked items
 

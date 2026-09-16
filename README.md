@@ -1,189 +1,166 @@
-# 🤖 JARVIS Assistant
+# JARVIS Assistant
 
-A production-quality voice-controlled AI assistant with an advanced holographic UI inspired by Iron Man's J.A.R.V.I.S.
-
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![Node](https://img.shields.io/badge/node-18+-green.svg)
+A fully local, keyless, voice-driven AI assistant with a holographic 3D UI, multi-turn conversation, model-chosen tools, persistent memory, computer actions, and MCP integrations. Runs entirely offline except for web search, weather, and model downloads.
 
 ## ✨ Features
 
-- 🎤 **Voice Control** - Wake word detection, speech-to-text, and natural language understanding
-- 🎨 **3D Holographic UI** - Real-time animated sphere with state-responsive effects
-- 🧠 **Intelligent Planning** - Multi-step task execution with LLM-powered reasoning
-- 🔧 **Extensible Tools** - Web search, messaging, smart search, and more
-- 💾 **Memory System** - Persistent memory and context awareness
-- 🔒 **Safety Layer** - Permission system for sensitive operations
+- **"Hey Jarvis" wake word** — openWakeWord, no access key required
+- **Local speech I/O** — faster-whisper STT, Kokoro TTS with sentence streaming and barge-in
+- **Typed commands** — WebSocket-connected input box, works without a microphone
+- **Tools** — time, calculator, weather, web search & page fetch, open apps/URLs, media keys, file search/read, screen OCR, reminders
+- **Long-term memory** — semantic fact store with SQLite + embeddings, auto-extraction from conversation
+- **MCP servers** — filesystem server included; add more via `mcp_servers.json`
+- **Permission prompts** — reading a file, reading the screen, forgetting a memory and MCP tools ask before acting
+- **3D holographic UI** — React Three Fiber orb with state-responsive visuals
+- **Desktop window** — Electron shell, one-command launch/stop
 
-## 🏗️ Architecture
+## Requirements
 
-### Frontend (React + Next.js)
-- **Three.js** - 3D graphics and particle systems
-- **Zustand** - State management
-- **Framer Motion** - Animations
-- **Tailwind CSS** - Styling
-- **Tone.js** - Audio analysis
+- Windows 11
+- Python 3.12
+- Node 22, npm 11
+- Ollama 0.34+ (models are pulled by `scripts/ensure_ollama.py`)
+- ~10 GB disk for models (qwen3:8b, nomic-embed-text, Whisper, Kokoro, openWakeWord)
+- NVIDIA GPU optional (Whisper uses CUDA when available, otherwise the CPU)
 
-### Backend (Python)
-- **LM Studio** - Local LLM (Qwen 2.5 14B)
-- **Porcupine** - Wake word detection
-- **SpeechRecognition** - Speech-to-text
-- **Edge-TTS** - Text-to-speech
+## Setup
 
-## 🚀 Getting Started
+```powershell
+# 1. Python environment
+py -3.12 -m venv .venv
+.venv/Scripts/activate
+pip install -r requirements.txt -r requirements-dev.txt
 
-### Prerequisites
-
-- Python 3.8 or higher
-- Node.js 18 or higher
-- LM Studio (or compatible OpenAI API endpoint)
-- Microphone for voice input
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/jarvis-assistant.git
-   cd jarvis-assistant
-   ```
-
-2. **Set up Python environment**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate  # Windows
-   # source .venv/bin/activate  # Linux/Mac
-   pip install -r requirements.txt
-   ```
-
-3. **Install Node.js dependencies**
-   ```bash
-   npm install
-   ```
-
-4. **Configure environment**
-   ```bash
-   # Copy example env file
-   cp .env.example .env
-   
-   # Add your API key to key.txt or .env file
-   # Get a free Gemini API key from: https://makersuite.google.com/app/apikey
-   ```
-
-5. **Start LM Studio**
-   - Download from: https://lmstudio.ai/
-   - Load a model (recommended: Qwen 2.5 14B)
-   - Start the server on port 1234
-
-## 🎮 Usage
-
-### Frontend Development
-
-```bash
-# Install dependencies
+# 2. Node dependencies
 npm install
 
-# Run development server
-npm run dev
+# 3. Pull Ollama models
+.venv/Scripts/python.exe scripts/ensure_ollama.py
+
+# 4. Download voice models (Whisper, Kokoro, openWakeWord)
+.venv/Scripts/python.exe scripts/download_models.py
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the UI.
+## Running
 
-### Backend (Python Voice Assistant)
+### Desktop (recommended)
+Double-click `start_jarvis.bat` or run:
+```powershell
+scripts/start_jarvis.ps1
+```
+This starts Ollama (if needed), the FastAPI backend on `:8000`, the Next.js production UI on `:3000`, and an Electron window. Close the window to stop everything, or run `scripts/start_jarvis.ps1 -Stop`.
 
-```bash
-# Activate virtual environment
-.venv\Scripts\activate
+Options:
+- `-NoElectron` — run headless (backend + UI only)
+- `-Fake` — use `FakeLLM` (no Ollama), voice disabled
+- `-Rebuild` — force `npm run build` before starting
+- `-TimeoutSec N` — HTTP wait timeout (default 300)
 
-# Run backend server (voice + text over WebSocket)
-python -m uvicorn server:create_app --factory --host 127.0.0.1 --port 8000
-
-# Run CLI mode (text)
-python main.py
+### Text-only CLI
+```powershell
+.venv/Scripts/python.exe main.py
 ```
 
-## UI States
-
-The holographic interface responds to different assistant states:
-
-- **idle** - Slow breathing animation (Blue)
-- **listening** - Expansion effect (Green)
-- **thinking** - Chaotic rotation (Purple)
-- **responding** - Normal state (Blue)
-- **executing_tool** - Sharp pulsing (Red)
-
-## Project Structure
-
+### Microphone check
+```powershell
+.venv/Scripts/python.exe scripts/voice_hardware_check.py
 ```
-jarvis-assistant/
-├── app/                    # Next.js app router
-│   ├── page.tsx           # Main UI page
-│   ├── layout.tsx         # Root layout
-│   └── globals.css        # Global styles
-├── components/            # React components
-│   ├── ai-core/          # 3D scene components
-│   │   ├── CoreSphere.tsx
-│   │   ├── ParticleField.tsx
-│   │   └── BeamNetwork.tsx
-│   └── overlay/          # UI overlays
-│       ├── AssistantText.tsx
-│       └── ToolIndicator.tsx
-├── hooks/                # Custom React hooks
-│   └── useAudioAnalyzer.ts
-├── store/                # Zustand stores
-│   └── assistantStore.ts
-├── assistant/            # Python backend
-│   ├── orchestrator.py   # Main coordinator
-│   ├── brain/           # LLM logic
-│   ├── tools/           # Tool implementations
-│   ├── voice/           # Voice components
-│   └── ui/              # PyQt6 UI (legacy)
-├── main.py              # CLI entry point
-└── server.py            # Backend server entry point
-```
+
+## Configuration
+
+Every setting is a `JARVIS_*` environment variable or `.env` entry. Defaults live in `assistant/config.py`.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama API base |
+| `CHAT_MODEL` | `qwen3:8b` | Chat model name |
+| `EMBED_MODEL` | `nomic-embed-text` | Embedding model name |
+| `LLM_BACKEND` | `ollama` | `ollama` or `fake` |
+| `LLM_TIMEOUT_S` | `120.0` | LLM request timeout |
+| `LLM_DISABLE_THINKING` | `true` | Ask qwen3 to answer without a thinking phase (`think: false`) |
+| `USER_DESCRIPTION` | `Final-year engineering student` | Injected into system prompt |
+| `LOCATION_NAME` | `Pimpri-Chinchwad, Maharashtra, India` | Weather location label |
+| `LATITUDE` | `18.6298` | Weather latitude |
+| `LONGITUDE` | `73.7997` | Weather longitude |
+| `TIMEZONE` | `Asia/Kolkata` | IANA timezone |
+| `DATA_DIR` | `data` | SQLite, logs, etc. |
+| `MODELS_DIR` | `models` | Whisper/Kokoro/wake models |
+| `WHISPER_MODEL` | `small.en` | faster-whisper model |
+| `WHISPER_DEVICE` | `auto` | `auto`, `cuda`, `cpu` |
+| `TTS_VOICE` | `bm_george` | Kokoro voice |
+| `TTS_SPEED` | `1.1` | Speech speed multiplier |
+| `WAKE_MODEL` | `hey_jarvis` | openWakeWord model |
+| `WAKE_THRESHOLD` | `0.5` | Wake detection threshold |
+| `VAD_SILENCE_MS` | `600` | Silero silence cutoff |
+| `VOICE_ENABLED` | `true` | Enable voice pipeline |
+| `SERVER_HOST` | `127.0.0.1` | FastAPI bind address |
+| `SERVER_PORT` | `8000` | FastAPI port |
+| `MAX_AGENT_STEPS` | `5` | Tool loop hard cap |
+| `HISTORY_MAX_CHARS` | `12000` | Conversation truncation |
+| `PERMISSION_TIMEOUT_S` | `30.0` | Prompt timeout |
+| `FILE_ROOTS` | `["~/Documents","~/Desktop","~/Downloads"]` | File tool search roots |
+| `MCP_CONFIG_PATH` | `mcp_servers.json` | MCP server definitions |
+
+## Privacy & Permissions
+
+- **Fully local processing** — no cloud APIs for chat, STT, TTS, wake word, OCR, or embeddings. The only network calls are web search (DuckDuckGo via `ddgs`), page fetching (`fetch_page`, public addresses only), weather (Open-Meteo) and model downloads.
+- **Permission model** — `read_file`, `read_screen`, `forget` and every MCP tool (unless its entry in `mcp_servers.json` sets `"requires_permission": false`) emit a `permission_request` over the WebSocket; the UI shows an Allow/Deny prompt, and an unanswered prompt is denied after `PERMISSION_TIMEOUT_S` (30 s). Opening apps and URLs, media keys, reminders, memory saving and searching file names run without asking.
+- **Untrusted content** — file text and screen text are passed to the model labelled as untrusted data, never as instructions.
+- **Redaction** — before anything is written to the database, API-key-like tokens, email addresses, card numbers, 12-digit ID numbers, phone numbers and the value after "password / passcode / pin / otp" are replaced with placeholders.
+- **Data location** — all persistent data lives under `data/` (ignored by git): `jarvis.db` (messages, facts, reminders), logs, launcher state.
 
 ## Development
 
-### Testing UI States
+### Architecture (text diagram)
+```
+UI (Next.js + R3F) ──WS──▶ FastAPI (:8000)
+    │                         │
+    │                    ┌────┴────┐
+    │                    ▼         ▼
+    │              Orchestrator  VoiceController
+    │                    │         │
+    │              ┌─────┴─────┐   │
+    │              ▼           ▼   │
+    │         ToolRegistry   STT/TTS
+    │              │           │
+    │         ┌────┴────┐  Wake/VAD
+    │         ▼         ▼
+    │      Builtin    MCP
+    │      Tools     Bridge
+    │
+    └── Electron (optional)
+```
 
-Use the Leva controls (top-right) to test different states:
-- Change status (idle/listening/thinking/executing_tool)
-- Update transcript text
-- Simulate tool execution
+### Commands
+```powershell
+# Quick gate (unit tests, tsc, vitest, secret scan)
+scripts/verify_all.ps1 -Quick
 
-### Connecting to Python Backend
+# Full gate (adds live, models, e2e, Playwright)
+scripts/verify_all.ps1
 
-To connect the React UI to the Python backend, you'll need to:
-1. Add WebSocket support to the Python orchestrator
-2. Update the Zustand store to listen for WebSocket messages
+# Python unit tests only
+.venv/Scripts/python.exe -m pytest -m "not live and not models and not e2e" -q
 
-## 🤝 Contributing
+# Live tests (needs Ollama)
+.venv/Scripts/python.exe -m pytest -m live -q
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+# Model tests (needs downloaded model files)
+.venv/Scripts/python.exe -m pytest -m models -q
 
-## 📝 License
+# Browser e2e (starts real servers)
+npm run e2e
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+# Spoken-command evals
+.venv/Scripts/python.exe scripts/run_evals.py
+```
 
-## ⚠️ Important Notes
-
-- **API Keys**: Never commit your API keys. Use `.env` files and add them to `.gitignore`
-- **Local LLM**: For privacy, consider using LM Studio with local models
-- **Wake Word**: Porcupine requires a free access key from [Picovoice Console](https://console.picovoice.ai/)
-
-## 🙏 Acknowledgments
-
-- Inspired by J.A.R.V.I.S. from the Marvel Cinematic Universe
-- Built with amazing open-source technologies
-- Special thanks to the AI and web development communities
-
-## 📞 Support
-
-If you encounter issues or have questions:
-- Open an [issue](https://github.com/YOUR_USERNAME/jarvis-assistant/issues)
-- Check existing issues for solutions
-- Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide
-3. Map Python states to UI states
+### Test markers (pytest.ini)
+- (none) — pure unit, fast, offline
+- `live` — real Ollama server
+- `models` — real Whisper/Kokoro/openWakeWord files, no network after download
+- `e2e` — real servers + Playwright/Edge
 
 ## License
 
-Private project - All rights reserved
+MIT
