@@ -27,7 +27,7 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P4-T1 | `MemoryDB` + `redact` + turn logging | DONE | 2026-09-16 | `docs/proof/P4-T1.md` | SQLite messages/facts/reminders, redaction before write, every turn logged; legacy memory modules removed; 6 db + 11 redact + 2 logging pass; tests isolated from ./data; finished by Claude Code |
 | P4-T2 | `MemoryManager` remember/search/forget + prompt injection | DONE | 2026-09-16 | `docs/proof/P4-T2.md` | Embedded facts with near-duplicate skip, semantic search, forget; relevant facts injected into the system prompt, search failure never breaks a turn; 4 manager + 2 recall pass; finished by Claude Code |
 | P4-T3 | Fact extraction + memory tools | DONE | 2026-09-16 | `docs/proof/P4-T3.md` | Background fact extraction after each reply; remember/recall/forget tools (forget needs permission); 7 extraction + 2 tool unit + 3 live pass; finished by Claude Code |
-| P4-T4 | Restart-persistence live proof | TODO | | | |
+| P4-T4 | Restart-persistence live proof | DONE | 2026-09-16 | `docs/proof/P4-T4.md` | Live test remember→restart→recall→forget passes; two-process transcript recalls teal after a real restart (pid 29448 → 31000); finished by Claude Code |
 | P5-T1 | `open_app`, `open_url`, `media_control` | TODO | | | |
 | P5-T2 | `search_files`, `read_file` | TODO | | | |
 | P5-T3 | `read_screen` (OCR) | TODO | | | |
