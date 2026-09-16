@@ -55,3 +55,4 @@ _None yet. For each BLOCKED task record: the exact error output, the three attem
 | 2026-09-16 | P4-T4 (end of phase 4; full gate `verify-20260916-094107.log`) | `2921f78701d00a0c589097e9694dfcedb9b5f41e` | yes |
 | 2026-09-16 | P5-T3 (after P5-T1..P5-T3; full gate `verify-20260916-095250.log`) | `eea4718176aef76a1859016f759a96d15b76bfe5` | yes |
 | 2026-09-16 | P5-T6 (end of phase 5; full gate `verify-20260916-104348.log`) | `f136284` | yes |
+| 2026-09-16 | P6-T6 (end of phase 6, final; P6-T4..P6-T6; full gate `verify-20260916-233743.log`) | `a986bbcad4ef1f5487c0abdba263f42e7a438d41` | yes (`main` `d31dfb6`, `Test` `a27b32d` unchanged) |
