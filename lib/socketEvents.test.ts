@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { applyServerEvent, isAssistantStatus, type SocketActions } from './socketEvents';
 
 function makeActions(): SocketActions {
-  return { setStatus: vi.fn(), setTranscript: vi.fn(), setActiveTool: vi.fn() };
+  return {
+    setStatus: vi.fn(), setTranscript: vi.fn(), setActiveTool: vi.fn(),
+    appendResponseDelta: vi.fn(), endStream: vi.fn(), setPendingPermission: vi.fn(),
+  };
 }
 
 describe('applyServerEvent', () => {
@@ -48,6 +51,39 @@ describe('applyServerEvent', () => {
 
   it('ignores unknown event types', () => {
     expect(applyServerEvent({ type: 'mystery', payload: 1 }, makeActions())).toBe(false);
+  });
+
+  it('streams deltas and finalises on ai_response', () => {
+    const actions = makeActions();
+    applyServerEvent({ type: 'ai_response_delta', payload: 'Hel' }, actions);
+    applyServerEvent({ type: 'ai_response', payload: 'Hello.' }, actions);
+    expect(actions.appendResponseDelta).toHaveBeenCalledWith('Hel');
+    expect(actions.setTranscript).toHaveBeenCalledWith('Hello.');
+    expect(actions.endStream).toHaveBeenCalled();
+  });
+
+  it('ends the stream when a new turn starts thinking', () => {
+    const actions = makeActions();
+    applyServerEvent({ type: 'state_change', payload: 'thinking' }, actions);
+    expect(actions.endStream).toHaveBeenCalled();
+  });
+
+  it('stores permission requests and clears them when the tool ends or the turn goes idle', () => {
+    const actions = makeActions();
+    const request = { id: 'p1', tool: 'read_file', summary: 'read the file notes.txt' };
+    expect(applyServerEvent({ type: 'permission_request', payload: request }, actions)).toBe(true);
+    expect(applyServerEvent({ type: 'permission_request', payload: { id: 1 } }, actions)).toBe(false);
+    applyServerEvent({ type: 'tool_end', payload: { id: 't', name: 'read_file', ok: false, summary: '' } }, actions);
+    applyServerEvent({ type: 'state_change', payload: 'idle' }, actions);
+    expect(actions.setPendingPermission).toHaveBeenNthCalledWith(1, request);
+    expect(actions.setPendingPermission).toHaveBeenNthCalledWith(2, null);
+    expect(actions.setPendingPermission).toHaveBeenNthCalledWith(3, null);
+  });
+
+  it('shows reminders', () => {
+    const actions = makeActions();
+    applyServerEvent({ type: 'reminder', payload: { id: 3, text: 'drink water' } }, actions);
+    expect(actions.setTranscript).toHaveBeenCalledWith('Reminder: drink water');
   });
 });
 
