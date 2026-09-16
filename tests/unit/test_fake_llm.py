@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 
 from assistant.brain.fake_llm import FakeLLM
@@ -35,3 +37,15 @@ def test_embeddings_are_deterministic_normalised_and_similarity_aware() -> None:
 def test_health_flag() -> None:
     assert FakeLLM().health() is True
     assert FakeLLM(healthy=False).health() is False
+
+
+def test_tool_command_hook_calls_a_tool_once() -> None:
+    llm = FakeLLM()
+    first = llm.chat([{"role": "user", "content": '/tool read_file {"path": "C:/notes.txt"}'}])
+    assert [(c.name, c.arguments) for c in first.tool_calls] == [("read_file", {"path": "C:/notes.txt"})]
+    follow_up = llm.chat([
+        {"role": "user", "content": '/tool read_file {"path": "C:/notes.txt"}'},
+        {"role": "assistant", "content": "", "tool_calls": [{"function": {"name": "read_file", "arguments": {}}}]},
+        {"role": "tool", "tool_name": "read_file", "content": "body"},
+    ])
+    assert follow_up.tool_calls == [] and follow_up.content.startswith("You said: /tool read_file")

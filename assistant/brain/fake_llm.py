@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import re
 from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
 
-from assistant.brain.llm import ChatResult
+from assistant.brain.llm import ChatResult, ToolCall
 
 
 class FakeLLM:
@@ -18,6 +19,7 @@ class FakeLLM:
         self.calls: list[dict[str, Any]] = []
         self.healthy = healthy
         self.dim = dim
+        self._tool_counter = 0
 
     def chat(
         self,
@@ -31,8 +33,17 @@ class FakeLLM:
         if self.script:
             result = self.script.pop(0)
         else:
-            last_user = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
-            result = ChatResult(content=f"You said: {last_user}", tool_calls=[])
+            last = messages[-1] if messages else {}
+            match = re.fullmatch(r"/tool (\w+) (\{.*\})", (last.get("content") or "").strip(), re.DOTALL)
+            if last.get("role") == "user" and match:
+                self._tool_counter += 1
+                result = ChatResult(
+                    content="",
+                    tool_calls=[ToolCall(id=f"fake-{self._tool_counter}", name=match.group(1), arguments=json.loads(match.group(2)))],
+                )
+            else:
+                last_user = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+                result = ChatResult(content=f"You said: {last_user}", tool_calls=[])
         if on_delta is not None and result.content:
             for chunk in re.findall(r"\S+\s*", result.content):
                 on_delta(chunk)
