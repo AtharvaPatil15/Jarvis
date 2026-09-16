@@ -41,6 +41,14 @@ Find a task's commit with `git log --oneline --grep "<TASK-ID>"`. Proof files li
 | P6-T5 | Eval suite ≥ 85 % | DONE | 2026-09-16 | `docs/proof/P6-T5.md` | 28/28 pass (100%); injection guard OK; report committed |
 | P6-T6 | Cleanup, README, final verification, push | DONE | 2026-09-16 | `docs/proof/P6-T6.md` | README/SECURITY/CONTRIBUTING/.env.example checked against code and corrected; legacy docs removed; `docs/FINAL_REPORT.md`: full gate, evals 28/28, latency 1.50 s, WER ≤ 0.111, persistence, launcher all pass; finished by Claude Code |
 
+## Post-launch fixes
+
+Fixes reported by the owner after all 35 plan tasks were DONE and pushed. Same TDD/proof/gate rules apply.
+
+| ID | Task | Status | Date | Proof | Notes |
+|---|---|---|---|---|---|
+| P7-T1 | Fix silent voice-pipeline crash (`voice:false`) | DONE | 2026-09-16 | `docs/proof/P7-T1.md` | `auto_select_best_mic` printed an emoji, which crashed on the launcher's redirected (cp1252) stdout and silently disabled voice; switched to `logging` (D-027); 4 new unit tests; real app re-launched and confirmed `voice:true` |
+
 ## Blocked items
 
 _None yet. For each BLOCKED task record: the exact error output, the three attempts made, and what would unblock it._

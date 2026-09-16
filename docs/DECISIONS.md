@@ -313,3 +313,24 @@ Format:
   lines never printed. Verified with `-TimeoutSec 0`, which now exits 1 and stops the backend.
 - Alternatives rejected: longer timeouts (the pipe never closes); `Start-Process -Wait` in the test (waits for the whole
   process tree, so it also hangs).
+
+## D-027 — `auto_select_best_mic` uses `logging`, not `print`, and drops emoji characters
+- Date: 2026-09-16
+- Task: post-launch fix (reported by the owner: JARVIS did not hear the wake word or speak, `voice:false`)
+- Decision: `assistant/voice/mic_selector.py` (inherited from the pre-plan codebase, wired into the new
+  `assistant/voice/factory.py` in P3-T6) replaces every `print(f"🎤 …")` / `print("⚠️ …")` with `logging`, and drops the
+  emoji characters entirely.
+- Reason: `scripts/start_jarvis.ps1` always starts the backend with `Start-Process -RedirectStandardOutput/-RedirectStandardError`
+  to log files. A Python process whose stdout is redirected (no attached console) encodes text with the Windows ANSI code
+  page — `cp1252` on this machine — not UTF-8, and `print("🎤 …")` raised `UnicodeEncodeError`. `server.py`'s lifespan
+  catches any exception from `build_voice_controller` and disables voice, logging "voice disabled" and reporting
+  `"voice": false` from `/health` — silently, with no visible error to the owner. This is exactly what the owner hit: no
+  response to the wake word, no spoken replies, and `data/launcher/backend.err.log` had the full traceback. There was no
+  test for this module (0 tests existed), so the crash shipped through every phase-3/6 gate, which never launches the real
+  process with redirected output and a real microphone. Reproduced in
+  `tests/unit/test_mic_selector.py::test_selecting_the_default_mic_never_raises_on_a_cp1252_stream` by pointing
+  `sys.stdout` at a strict `cp1252` `TextIOWrapper`, which fails before the fix and passes after.
+- Alternatives rejected: keeping `print()` and setting `PYTHONUTF8=1` on the launcher's child process (fixes this one
+  symptom but leaves `print()` — which is against `CONTRIBUTING.md` — and would still break for any future non-ASCII
+  message); wrapping only the failing `print()` line in `try/except` (hides the same bug the next time someone adds a
+  message here, instead of removing the actual cause).
