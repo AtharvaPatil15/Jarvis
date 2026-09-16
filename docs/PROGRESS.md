@@ -48,6 +48,7 @@ Fixes reported by the owner after all 35 plan tasks were DONE and pushed. Same T
 | ID | Task | Status | Date | Proof | Notes |
 |---|---|---|---|---|---|
 | P7-T1 | Fix silent voice-pipeline crash (`voice:false`) | DONE | 2026-09-16 | `docs/proof/P7-T1.md` | `auto_select_best_mic` printed an emoji, which crashed on the launcher's redirected (cp1252) stdout and silently disabled voice; switched to `logging` (D-027); 4 new unit tests; real app re-launched and confirmed `voice:true` |
+| P7-T2 | `create_folder` tool | DONE | 2026-09-17 | `docs/proof/P7-T2.md` | JARVIS had no tool that could create anything; new permission-gated `create_folder`, sandboxed like `read_file` (D-028); 4 new unit tests; verified live over the real app's WebSocket, folder created in real Documents |
 
 ## Blocked items
 

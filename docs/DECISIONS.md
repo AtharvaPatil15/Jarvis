@@ -334,3 +334,22 @@ Format:
   symptom but leaves `print()` — which is against `CONTRIBUTING.md` — and would still break for any future non-ASCII
   message); wrapping only the failing `print()` line in `try/except` (hides the same bug the next time someone adds a
   message here, instead of removing the actual cause).
+
+## D-028 — `create_folder` resolves a bare name into the first configured root
+- Date: 2026-09-17
+- Task: post-launch feature (reported by the owner: "I told it to create a new folder in documents, it could not do it")
+- Decision: added `CreateFolderTool` (`create_folder`, `requires_permission = True`) to `assistant/tools/builtin/files.py`.
+  A bare folder name with no location (e.g. "New Folder") is created under `settings.file_roots[0]`, which is Documents
+  by default; a path prefixed with a root's name (e.g. "Documents/Project X/Sub") is created under that root, making any
+  missing parent folders; anything that resolves outside every configured root is refused.
+- Reason: JARVIS had `search_files` and `read_file` but no tool that can create anything, so "create a folder" had no
+  matching tool and the model could only say it couldn't. Sandboxing follows the same pattern `read_file` already uses
+  (`Path.resolve()` + `is_relative_to(root)`), and the tool asks permission first because, unlike search or read, it
+  writes to the filesystem.
+- Alternatives rejected: a general `write_file`/`create_path` tool that also creates files (broader scope than what was
+  reported missing; a plain folder tool is enough for now and easier to reason about for permission prompts); requiring
+  the model to always give a root-qualified path (bare names like "New Folder" are how people actually ask for this, and
+  defaulting to Documents matches the reported request).
+- Verified live: restarted the running app, sent it "Create a new folder in Documents called '...'" over its real
+  WebSocket, approved the permission prompt, and confirmed the folder existed in the real Documents folder, then
+  removed it. See `docs/proof/P7-T2.md`.

@@ -7,10 +7,10 @@ A fully local, keyless, voice-driven AI assistant with a holographic 3D UI, mult
 - **"Hey Jarvis" wake word** — openWakeWord, no access key required
 - **Local speech I/O** — faster-whisper STT, Kokoro TTS with sentence streaming and barge-in
 - **Typed commands** — WebSocket-connected input box, works without a microphone
-- **Tools** — time, calculator, weather, web search & page fetch, open apps/URLs, media keys, file search/read, screen OCR, reminders
+- **Tools** — time, calculator, weather, web search & page fetch, open apps/URLs, media keys, file search/read, create folders, screen OCR, reminders
 - **Long-term memory** — semantic fact store with SQLite + embeddings, auto-extraction from conversation
 - **MCP servers** — filesystem server included; add more via `mcp_servers.json`
-- **Permission prompts** — reading a file, reading the screen, forgetting a memory and MCP tools ask before acting
+- **Permission prompts** — reading a file, creating a folder, reading the screen, forgetting a memory and MCP tools ask before acting
 - **3D holographic UI** — React Three Fiber orb with state-responsive visuals
 - **Desktop window** — Electron shell, one-command launch/stop
 
@@ -104,7 +104,7 @@ Every setting is a `JARVIS_*` environment variable or `.env` entry. Defaults liv
 ## Privacy & Permissions
 
 - **Fully local processing** — no cloud APIs for chat, STT, TTS, wake word, OCR, or embeddings. The only network calls are web search (DuckDuckGo via `ddgs`), page fetching (`fetch_page`, public addresses only), weather (Open-Meteo) and model downloads.
-- **Permission model** — `read_file`, `read_screen`, `forget` and every MCP tool (unless its entry in `mcp_servers.json` sets `"requires_permission": false`) emit a `permission_request` over the WebSocket; the UI shows an Allow/Deny prompt, and an unanswered prompt is denied after `PERMISSION_TIMEOUT_S` (30 s). Opening apps and URLs, media keys, reminders, memory saving and searching file names run without asking.
+- **Permission model** — `read_file`, `create_folder`, `read_screen`, `forget` and every MCP tool (unless its entry in `mcp_servers.json` sets `"requires_permission": false`) emit a `permission_request` over the WebSocket; the UI shows an Allow/Deny prompt, and an unanswered prompt is denied after `PERMISSION_TIMEOUT_S` (30 s). Opening apps and URLs, media keys, reminders, memory saving and searching file names run without asking.
 - **Untrusted content** — file text and screen text are passed to the model labelled as untrusted data, never as instructions.
 - **Redaction** — before anything is written to the database, API-key-like tokens, email addresses, card numbers, 12-digit ID numbers, phone numbers and the value after "password / passcode / pin / otp" are replaced with placeholders.
 - **Data location** — all persistent data lives under `data/` (ignored by git): `jarvis.db` (messages, facts, reminders), logs, launcher state.

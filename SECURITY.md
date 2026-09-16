@@ -26,12 +26,13 @@ Tools marked `requires_permission` are only run after the user answers an Allow/
 | Tool | Asks first |
 |------|------------|
 | `read_file` | Yes |
+| `create_folder` | Yes |
 | `read_screen` | Yes |
 | `forget` | Yes |
 | MCP tools | Yes, unless the server entry in `mcp_servers.json` sets `"requires_permission": false` |
 | `get_time`, `calculate`, `get_weather`, `web_search`, `fetch_page`, `search_files`, `open_app`, `open_url`, `media_control`, `set_reminder`, `list_reminders`, `remember`, `recall` | No |
 
-`open_url` only accepts `http`/`https` URLs, and `read_file` / `search_files` are limited to `JARVIS_FILE_ROOTS`
+`open_url` only accepts `http`/`https` URLs, and `read_file` / `search_files` / `create_folder` are limited to `JARVIS_FILE_ROOTS`
 (Documents, Desktop and Downloads by default) with path traversal refused. File and screen text is given to the model
 under an "untrusted content" header so that instructions inside it are treated as data.
 
