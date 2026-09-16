@@ -7,6 +7,7 @@ from assistant.config import Settings
 from assistant.tools.builtin.calculator import CalculateTool
 from assistant.tools.builtin.files import ReadFileTool, SearchFilesTool
 from assistant.tools.builtin.memory_tools import ForgetTool, RecallTool, RememberTool
+from assistant.tools.builtin.screen import ReadScreenTool
 from assistant.tools.builtin.system import MediaControlTool, OpenAppTool, OpenUrlTool
 from assistant.tools.builtin.time_tool import GetTimeTool
 from assistant.tools.builtin.weather import GetWeatherTool
@@ -23,6 +24,7 @@ def build_default_registry(settings: Settings, memory: Any | None = None, schedu
     registry.register(GetWeatherTool(settings.location_name, settings.latitude, settings.longitude))
     registry.register(SearchFilesTool(settings.file_roots))
     registry.register(ReadFileTool(settings.file_roots))
+    registry.register(ReadScreenTool())
     registry.register(OpenAppTool())
     registry.register(OpenUrlTool())
     registry.register(MediaControlTool())

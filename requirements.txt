@@ -19,3 +19,6 @@ jiwer
 pysilero-vad
 openwakeword
 rapidfuzz
+mss
+rapidocr-onnxruntime
+Pillow
